@@ -67,6 +67,7 @@ end
 
 -- converts BN back to number so {man = 1.5, exp= 2} is 150
 function Bn.toNumber(bn: BN): number
+	bn = Bn.convert(bn)
 	local man, exp = bn.man, bn.exp
 	if man >= 10 then
 		man /= 10
@@ -81,6 +82,9 @@ end
 function Bn.toStr(val: BN, toHyper: number?): string
 	toHyper = toHyper or 308
 	local man: number, exp: number = val.man, val.exp
+	if exp >= math.huge then return 'Inf' end
+	if exp <= -math.huge then return '-Inf' end
+	if exp ~= exp then return 'NaN' end
 	if exp >= toHyper then
 		local fromNum = Bn.fromNumber(exp)
 		return man .. 'e' .. Bn.toStr(fromNum, toHyper)
@@ -148,7 +152,7 @@ function Bn.convert(val: any): BN
 		end
 		return Bn.fromTable(val)
 	end
-	warn(`Failed to convert to BN autocorrect to {zero}`)
+	warn(`Failed to convert to BN autocorrect to {'zero'}`)
 	return zero
 end
 
@@ -635,7 +639,7 @@ end
 
 -- gets the lowest like 1, 1.5e10 only grabs 1
 function Bn.min<T...>(...: T...): BN
-	local args = {}
+	local args = {...}
 	if #args == 0 then return zero end
 	local best = Bn.convert(args[1])
 	for i = 2, #args do
@@ -649,7 +653,7 @@ end
 
 -- gets the best out of the ... so if u have 1, 5, '1e50' it gets the '1e50'
 function Bn.max<T...>(...: T...): BN
-	local args = {}
+	local args = {...}
 	if #args == 0 then return zero end
 	local best = Bn.convert(args[1])
 	for i = 2, #args do
@@ -810,9 +814,18 @@ function Bn.lbdecode(val: number): BN
 	v = v % 1e12
 	local expLow = math.floor(v / 1e8)
 	local man = 10^((v % 1e8) / 1e13)
-	local res = {man = man, exp = expHigh * 1e5 + expLow}
+	local res = Bn.new(man, expHigh * 1e5 + expLow)
 	if sign == 1 then res.man = -res.man end
 	return res
+end
+
+-- able to compute as max for setting 1e3 as ur new instead of setting to old as 0
+function Bn.encodeData(val: number, oldData: number)
+	local new = Bn.lbdecode(val)
+	if oldData == nil then return Bn.lbencode(new) end
+	local old = Bn.lbdecode(oldData)
+	local keep = Bn.max(old, new)
+	return Bn.lbencode(keep)
 end
 
 local hnNaN: HN = {man = 1, layer = 0/0, exp = 0/0}
