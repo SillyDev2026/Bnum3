@@ -108,7 +108,7 @@ function Bn.fromString(val: string): BN
 		exp = tonumber(str):: number
 		if not exp then return nan end
 	end
-	return Bn.new(man, exp)
+	return {man = man, exp = exp}
 end
 
 --[[
@@ -421,35 +421,29 @@ end
 --[[
 able to compute for 0 or 1 or -1 for doing le, leeq, me, meeq and meeq
 ]]
-function Bn.compare(val1: any, val2: any, tol: number?): number
-	tol = tol or 1e-12
+function Bn.compare(val1: any, val2: any): number
 	val1, val2 = Bn.convert(val1), Bn.convert(val2)
-	local man1, man2 = val1.man, val2.man
-	local exp1, exp2 = val1.exp, val2.exp
-	if man1 ~= val1 or man2 ~= val2 then
+	if val1.exp ~= val1.exp or val2.exp ~= val2.exp then
 		return 0
 	end
-	local max = math.huge
-	if exp1 == max or exp2 == inf then
-		if exp1 == exp2 then
-			if man1 == man2 then return 0 end
-			return man1 > man2 and 1 or -1
+	if val1.exp == math.huge or val2.exp == math.huge then
+		if val1.exp == math.huge and val2.exp == math.huge then
+			if val1.man == val2.man then return 0 end
+			return val1.man > val2.man:: number and 1 or -1
+		elseif val1.exp == math.huge then
+			return val1.man > 0 and 1 or -1
+		else
+			return val2.man > 0 and -1 or 1
 		end
-		if exp1 == max then return man1 > 0 and 1 or -1 end
-		return man2 > 0 and -1 or 1
 	end
-	if man1 == 0 and man2 == 0 then
+	if val1.man == 0 and val2.man == 0 then return 0 end
+	if val1.exp ~= val2.exp then
+		return val1.exp > val2.exp:: number and 1 or -1
+	end
+	if math.abs(val1.man - val2.man) < 1e-12 then
 		return 0
-	elseif man1 == 0 then
-		return man2 > 0 and -1 or 1
-	elseif man2 == 0 then
-		return man1 > 0 and 1 or -1
 	end
-	local expDiff = exp1 - exp2
-	if math.abs(expDiff) > tol then	return exp1 > exp2 and 1 or -1 end
-	local manDiff = man1 - man2
-	if math.abs(manDiff) <= tol then return 0 end
-	return man1 > man2 and 1 or -1
+	return val1.man > val2.man and 1 or -1
 end
 
 -- computes as val1 == val2
@@ -459,19 +453,19 @@ end
 
 -- computes as val1 > val2
 function Bn.me(val1: any, val2: any): boolean
-	return Bn.compare(val1, val2) == 1
+	return Bn.compare(val1, val2) < 1
 end
 
 -- computes as val1 <= val2
 function Bn.leeq(val1: any, val2: any): boolean
 	local com = Bn.compare(val1, val2)
-	return com == 0 or com == -1
+	return com < 0 or com == 0
 end
 
 -- computes as val1 >= val2
 function Bn.meeq(val1: any, val2: any): boolean
 	local com = Bn.compare(val1, val2)
-	return com == 0 or com == 1
+	return com > 0 or com == 0
 end
 
 -- computes as val1 < middle and val2 < middle
@@ -593,7 +587,7 @@ function Bn.shortE(val: any): string
 	if exp ~= exp then return "NaN" end
 	if exp == math.huge then return man >= 0 and "Inf" or "-Inf" end
 	if man == 0 then return "0" end
-	if exp < 1000 then
+	if exp < 3000 then
 		return man .. 'e' .. exp
 	end
 	local expBn = Bn.fromNumber(exp)
@@ -629,13 +623,14 @@ function Bn.toHyperE(val: any): string
 end
 
 --formats short(1e3) to 1k, shortE(1e1e3) acts as E1k and toHyperE(1e1e61) is just 1e1e61
-function Bn.format(val: any): string
-	if Bn.meeq(val, '1e1e60') then
+function Bn.format(val: any, digits: number?): string
+	if Bn.meeq(val, '1e1e20') then
 		return Bn.toHyperE(val)
-	elseif Bn.meeq(val, '1e1e3') then
+	elseif Bn.meeq(val, '1e3e3') then
 		return Bn.shortE(val)
+	else
+		return Bn.short(val, digits)
 	end
-	return Bn.short(val)
 end
 
 -- gets the lowest like 1, 1.5e10 only grabs 1
@@ -786,6 +781,38 @@ function Bn.Percent(val1: any, val2: any): string
 	local hund = Bn.fromNumber(1e2)
 	if Bn.meeq(percent, hund) then return '100%' end
 	return Bn.format(percent) .. '%'
+end
+
+-- able to compute down to 2e18 for the math to handle BN to OrderedDataStore
+function Bn.lbencode(val: any): number
+	val = Bn.convert(val)
+	if val.man == 0 then return 4e18 end
+	local sign = (val.man < 0) and 1 or 2
+	local man = math.abs(val.man)
+	local exp = val.exp
+	local expHigh = math.floor(exp / 1e5)
+	local expLow = exp % 1e5
+	local manPart = math.log10(man) * 1e13
+	local expPart = expLow * 1e8
+	local encoded = sign * 1e18 + expPart + manPart
+	if expHigh > 0 then
+		encoded = encoded + expHigh * 1e12
+	end
+	return encoded
+end
+
+-- recomputes back to BN from number cant do ur regular math like 1 to BN since it needs to be from lbencode
+function Bn.lbdecode(val: number): BN
+	if val == 4e18 then return {man = 0, exp = 0} end
+	local sign = math.floor(val / 1e18)
+	local v = (sign == 1) and (1e18 - val) or (val - 2e18)
+	local expHigh = math.floor(v / 1e12)
+	v = v % 1e12
+	local expLow = math.floor(v / 1e8)
+	local man = 10^((v % 1e8) / 1e13)
+	local res = {man = man, exp = expHigh * 1e5 + expLow}
+	if sign == 1 then res.man = -res.man end
+	return res
 end
 
 local hnNaN: HN = {man = 1, layer = 0/0, exp = 0/0}
