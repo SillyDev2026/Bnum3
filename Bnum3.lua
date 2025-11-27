@@ -479,7 +479,6 @@ function Bn.between(val1: any, val2: any, middle: any): boolean
 	return Bn.leeq(val1, middle) and Bn.leeq(middle, val2)
 end
 
-
 --[[
 helps with math.floor but for BN
 ]]
@@ -503,7 +502,27 @@ end
 
 -- converts BN to readable time for s, m, h, d, w
 function Bn.timeConvert(val: any): string
-	return ''
+	val = Bn.convert(val)
+	local seconds = Bn.toNumber(val)
+	if seconds < 0 then return "0s" end
+	local days = math.floor(seconds / 86400)
+	local hours = math.floor((seconds % 86400) / 3600)
+	local minutes = math.floor((seconds % 3600) / 60)
+	local secs = seconds % 60
+	local wholeSec = math.floor(secs)
+	local ms = math.floor((secs - wholeSec) * 1000)
+	local parts = {}
+	if days > 0 then table.insert(parts, days .. "d") end
+	if hours > 0 then table.insert(parts, hours .. "h") end
+	if minutes > 0 then table.insert(parts, minutes .. "m") end
+	if wholeSec > 0 or (#parts == 0 and ms == 0) then
+		table.insert(parts, wholeSec .. "s")
+	end
+	if ms > 0 then
+		table.insert(parts, ms .. "ms")
+	end
+	if wholeSec == 0 then return 'Ready' end
+	return table.concat(parts, ":")
 end
 
 local first = {'', 'k', 'm', 'b'}
@@ -768,7 +787,6 @@ function Bn.Percent(val1: any, val2: any): string
 	if Bn.meeq(percent, hund) then return '100%' end
 	return Bn.format(percent) .. '%'
 end
-
 
 local hnNaN: HN = {man = 1, layer = 0/0, exp = 0/0}
 local hnZero: HN = {man = 0, layer = 0, exp = 0}
