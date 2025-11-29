@@ -457,7 +457,12 @@ end
 
 -- computes as val1 > val2
 function Bn.me(val1: any, val2: any): boolean
-	return Bn.compare(val1, val2) < 1
+	return Bn.compare(val1, val2) == 1
+end
+
+-- computes as val < val2
+function Bn.le(val1: any, val2: any): boolean
+	return Bn.compare(val1, val2) == -1
 end
 
 -- computes as val1 <= val2
@@ -838,30 +843,19 @@ creates ur own Custom Suffix that follows as example
 and so on
 ]]
 
-type CustomSuffixTable = {firstSet: {string},Second: {string},Third: {string},}
-
--- lets u create ur own Suffixes instead of doing the .short thats where the explantion is in for .customShort
-function Bn.customSuffix(custom: CustomSuffixTable, index: number): string
-	local firstSet = custom.firstSet
-	local Second = custom.Second
-	local Third = custom.Third
-	if #firstSet > 10 then
-		error("firstSet cannot contain more than 5 items")
+-- Suffix table creator
+function Bn.newSuffixTable(firstSet: {string}, secondSet: {string}, thirdSet: {string})
+	local T = {firstSet = firstSet, secondSet = secondSet, thirdSet = thirdSet}
+	function T:customSuffix(index: number): string
+		local hund = math.floor(index / 100)
+		index %= 100
+		local ten = math.floor(index / 10)
+		index %= 10
+		local one = index
+		return (self.firstSet[one + 1]:: string or "") .. (self.secondSet[ten + 1]:: string or "") .. (self.thirdSet[hund + 1]:: string or "")
 	end
-	if #Second > 10 then
-		error("Second cannot contain more than 10 items")
-	end
-	if #Third > 10 then
-		error("Third cannot contain more than 10 items")
-	end
-	local hund = math.floor(index / 100)
-	index %= 100
-	local ten = math.floor(index / 10)
-	index %= 10
-	local one = index
-	return (firstSet[one + 1] or "") ..(Second[ten + 1] or "") ..(Third[hund + 1] or "")
+	return T
 end
-
 --[[
 must use the customSuffix function to access this
 but have it as ur own if u want
@@ -869,11 +863,12 @@ firstSet = {"", "U","D","T","Qd","Qn","Sx","Sp","Oc","No"}
 Second = {"", "De","Vt","Tg","qg","Qg","sg","Sg","Og","Ng"}
 Third = {"", "Ce", "Du","Tr","Qa","Qi","Se","Si","Ot","Ni"}
  ]]
-function Bn.customShort(val: any, customSuffix: CustomSuffixTable , digits: number?): string
+function Bn.customShort(val: any, customSuffix , digits: number?): string
 	digits = digits or 0
 	val = Bn.convert(val)
 	local man, exp = val.man, val.exp
 	man = Bn.showDigits(man, digits)
+	local firstSet, secondSet, thirdSet = customSuffix.firstSet, customSuffix.secondSet, customSuffix.thirdSet
 	if exp ~= exp then return 'NaN' end
 	if exp == math.huge then return man >= 0 and 'Inf' or '-Inf' end
 	if man == 0 then return '0' end
@@ -882,7 +877,7 @@ function Bn.customShort(val: any, customSuffix: CustomSuffixTable , digits: numb
 		if index <= #first then
 			return '1/' ..man.. first[index + 1]
 		end
-		return '1/' ..man.. Bn.customSuffix(customSuffix ,index-1)
+		return '1/' ..man.. Bn.newSuffixTable(firstSet, secondSet, thirdSet):customSuffix(index)
 	end
 	if exp >= 3 and exp < 9 then
 		return Bn.Comma(val)
@@ -896,7 +891,7 @@ function Bn.customShort(val: any, customSuffix: CustomSuffixTable , digits: numb
 		return man .. first[index+1] or ''
 	end
 	local suffix = index - 1
-	return man .. Bn.suffixPart(suffix)
+	return man .. Bn.newSuffixTable(firstSet, secondSet, thirdSet):customSuffix(suffix)
 end
 
 --[[
