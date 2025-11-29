@@ -24,23 +24,10 @@ function normalize(man: number, exp: number): BN
 		return zero
 	end
 	local sign = 1
-	if man < 0 then
-		sign = -1
-		man = -man
-	end
-	if man < 1 then
-		man *= 10
-		exp -= 1
-	elseif man >= 10 then
-		man /= 10
-		exp += 1
-	end
+	local logMan = math.floor(math.log10(man))
+	man /= 10^logMan
+	exp += logMan
 	man = man * sign
-	local frac = exp % 1
-	if frac ~= 0 then
-		man *= 10^frac
-		exp -= frac
-	end
 	if exp >= math.huge then return inf elseif exp <= -math.huge then return neginf end
 	return {man = man, exp = exp}
 end
@@ -66,16 +53,8 @@ function Bn.fromNumber(val: number): BN
 end
 
 -- converts BN back to number so {man = 1.5, exp= 2} is 150
-function Bn.toNumber(bn: BN): number
-	bn = Bn.convert(bn)
-	local man, exp = bn.man, bn.exp
-	if man >= 10 then
-		man /= 10
-	end
-	if man < 1 then
-		man *= 10
-	end
-	return man * 10^exp
+function Bn.toNumber(val: BN): number
+	return val.man * 10^val.exp
 end
 
 -- converts BN to string to store into a StringValue, base toHyper is 308 change it to what u want like 10
@@ -505,8 +484,7 @@ end
 
 -- converts BN to readable time for s, m, h, d, w
 function Bn.timeConvert(val: any): string
-	val = Bn.convert(val)
-	local seconds = Bn.toNumber(val)
+	local seconds = Bn.toNumber(Bn.convert(val))
 	if seconds < 0 then return "0s" end
 	local days = math.floor(seconds / 86400)
 	local hours = math.floor((seconds % 86400) / 3600)
@@ -542,15 +520,9 @@ function Bn.suffixPart(index: number): string
 	return (firstset[one+1] or '') .. (second[ten+1] or '') .. (third[hund+1] or '')
 end
 
--- helper to show 10.02 instead of 10.020000000006 for .short
-function Bn.showDigits(val: any, digits: number?): number
-	digits = digits or 2
-	return math.floor(val * 10^digits + 0.001) / 10^digits
-end
-
 -- helper todo comma and only
 function Bn.Comma(val: any): string
-	val = Bn.toNumber(Bn.convert(val))
+	val = Bn.toNumber(val)
 	local str = tostring(val)
 	local left, num, right = string.match(str, '^([^%d]*%d)(%d*)(.-)$')
 	num = num:reverse():gsub('(%d%d%d)', '%1,')
@@ -562,12 +534,12 @@ function Bn.short(val: any, digits: number?): string
 	digits = digits or 2
 	val = Bn.convert(val)
 	local man, exp = val.man, val.exp
-	man = Bn.showDigits(man, digits)
 	if exp ~= exp then return 'NaN' end
 	if exp == math.huge then return man >= 0 and 'Inf' or '-Inf' end
 	if man == 0 then return '0' end
 	if exp < 0 then
 		local index = math.floor(-exp / 3)
+		man = math.floor(man * 100+ 0.001) / 100
 		if index <= #first then
 			return '1/' ..man.. first[index + 1]
 		end
@@ -578,13 +550,14 @@ function Bn.short(val: any, digits: number?): string
 	end
 	if exp < 3 then
 		local num = Bn.toNumber(val)
-		return tostring(Bn.showDigits(num, digits))
+		return tostring(math.floor(num * 100 + 0.001) / 100)
 	end
 	local index = math.floor(exp/3)
 	if index < #first then
 		return man .. first[index+1] or ''
 	end
 	local suffix = index - 1
+	man = math.floor(man * 100 + 0.001) / 100
 	return man .. Bn.suffixPart(suffix)
 end
 
@@ -592,11 +565,13 @@ end
 function Bn.shortE(val: any): string
 	val = Bn.convert(val)
 	local man, exp = val.man, val.exp
+	local lf = exp % 3
 	if exp ~= exp then return "NaN" end
 	if exp == math.huge then return man >= 0 and "Inf" or "-Inf" end
 	if man == 0 then return "0" end
 	if exp < 3000 then
-		return man .. 'e' .. exp
+		man = math.floor(man * 10^lf) / 10^lf
+		return man .. 'e' .. math.floor(exp)
 	end
 	local expBn = Bn.fromNumber(exp)
 	local expStr = Bn.short(expBn)
@@ -604,8 +579,7 @@ function Bn.shortE(val: any): string
 end
 
 -- just like toString but instead its just man .. 'e' .. exp so 1.23e1308 doesnt convert toHyperE
-function Bn.toScienctific(val: any): string
-	val = Bn.convert(val)
+function Bn.toScienctific(val: BN): string
 	return val.man .. 'e' .. val.exp
 end
 
@@ -616,18 +590,15 @@ function Bn.toHyperE(val: any): string
 	if exp ~= exp then return "NaN" end
 	if exp == math.huge then return man >= 0 and "Inf" or "-Inf" end
 	if man == 0 then return "0" end
-	if exp <= 308 then
-		return Bn.toScienctific(val)
-	end
 	local function hyperE(e: number): string
-		if e <= 308 then
-			return tostring(e)
+		if e<= 308 then
+			return tostring(math.floor(e))
 		end
 		local top = math.floor(math.log10(e))
-		local rest = e / 10^top
-		return man .. 'e' .. hyperE(top)
+		local frac = e/ 10^top
+		return math.floor(frac * 100 + 0.001) / 100 ..'e' .. hyperE(top)
 	end
-	return man .. 'e' .. hyperE(exp)
+	return man ..'e' .. hyperE(exp)
 end
 
 --formats short(1e3) to 1k, shortE(1e1e3) acts as E1k and toHyperE(1e1e61) is just 1e1e61
@@ -835,14 +806,6 @@ end
 local hnNaN: HN = {man = 1, layer = 0/0, exp = 0/0}
 local hnZero: HN = {man = 0, layer = 0, exp = 0}
 
---[[
-creates ur own Custom Suffix that follows as example
-
-{'', 'k', 'm', 'b'}
-{'', 'U', 'D', 'T', 'Qd', 'Qn', 'Sx', 'Sp', 'Oc', 'No'}
-and so on
-]]
-
 -- Suffix table creator
 function Bn.newSuffixTable(firstSet: {string}, secondSet: {string}, thirdSet: {string})
 	local T = {firstSet = firstSet, secondSet = secondSet, thirdSet = thirdSet}
@@ -867,12 +830,12 @@ function Bn.customShort(val: any, customSuffix , digits: number?): string
 	digits = digits or 0
 	val = Bn.convert(val)
 	local man, exp = val.man, val.exp
-	man = Bn.showDigits(man, digits)
 	local firstSet, secondSet, thirdSet = customSuffix.firstSet, customSuffix.secondSet, customSuffix.thirdSet
 	if exp ~= exp then return 'NaN' end
 	if exp == math.huge then return man >= 0 and 'Inf' or '-Inf' end
 	if man == 0 then return '0' end
 	if exp < 0 then
+		man = math.floor(man * 100 +0.001) / 100
 		local index = math.floor(-exp / 3)
 		if index <= #first then
 			return '1/' ..man.. first[index + 1]
@@ -884,7 +847,7 @@ function Bn.customShort(val: any, customSuffix , digits: number?): string
 	end
 	if exp < 3 then
 		local num = Bn.toNumber(val)
-		return tostring(Bn.showDigits(num, digits))
+		return tostring(math.floor(num * 100 + 0.001) / 100)
 	end
 	local index = math.floor(exp/3)
 	if index < #first then
