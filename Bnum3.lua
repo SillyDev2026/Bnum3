@@ -28,12 +28,16 @@ function normalize(man: number, exp: number): BN
 	man /= 10^logMan
 	exp += logMan
 	man = man * sign
+	local frac = exp % 1
+	if frac ~= 0 then
+		man *= 10^frac
+		exp -= frac
+	end
 	if exp >= math.huge then return inf elseif exp <= -math.huge then return neginf end
 	return {man = man, exp = exp}
 end
 
 local Bn = {}
-
 --[[
 creates a new BN as in {man = 1, exp = 3} ex. 1000 but with normalize it converts it. so it doesnt do {man = 0.98, exp = 3} but its {man = 9.8, exp = 2}
 
@@ -54,6 +58,7 @@ end
 
 -- converts BN back to number so {man = 1.5, exp= 2} is 150
 function Bn.toNumber(val: BN): number
+	if val.exp >= 308 then return math.huge end
 	return val.man * 10^val.exp
 end
 
@@ -821,7 +826,7 @@ function Bn.newSuffixTable(firstSet: {string}, secondSet: {string}, thirdSet: {s
 end
 --[[
 must use the customSuffix function to access this
-but have it as ur own if u want
+but have it as ur own if u want as example
 firstSet = {"", "U","D","T","Qd","Qn","Sx","Sp","Oc","No"}
 Second = {"", "De","Vt","Tg","qg","Qg","sg","Sg","Og","Ng"}
 Third = {"", "Ce", "Du","Tr","Qa","Qi","Se","Si","Ot","Ni"}
@@ -855,6 +860,15 @@ function Bn.customShort(val: any, customSuffix , digits: number?): string
 	end
 	local suffix = index - 1
 	return man .. Bn.newSuffixTable(firstSet, secondSet, thirdSet):customSuffix(suffix)
+end
+
+-- able to abs neg(val) == -1.325e3 back to 1.325e3 if not then stays 1.325e3
+function Bn.abs(val: any): BN
+	val = Bn.convert(val)
+	if val.man < 0 then
+		return Bn.new(-val.man, val.exp)
+	end
+	return val
 end
 
 --[[
