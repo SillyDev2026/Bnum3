@@ -557,7 +557,6 @@ function Bn.short(val: any, digits: number?): string
 	digits = digits or 2
 	val = Bn.convert(val)
 	local man, exp = val.man, val.exp
-	local lf = exp % 3
 	man = Bn.showDigits(man, digits)
 	if exp ~= exp then return 'NaN' end
 	if exp == math.huge then return man >= 0 and 'Inf' or '-Inf' end
@@ -830,53 +829,117 @@ end
 
 local hnNaN: HN = {man = 1, layer = 0/0, exp = 0/0}
 local hnZero: HN = {man = 0, layer = 0, exp = 0}
+
+--[[
+creates ur own Custom Suffix that follows as example
+
+{'', 'k', 'm', 'b'}
+{'', 'U', 'D', 'T', 'Qd', 'Qn', 'Sx', 'Sp', 'Oc', 'No'}
+and so on
+]]
+
+type CustomSuffixTable = {firstSet: {string},Second: {string},Third: {string},}
+
+-- lets u create ur own Suffixes instead of doing the .short thats where the explantion is in for .customShort
+function Bn.customSuffix(custom: CustomSuffixTable, index: number): string
+	local firstSet = custom.firstSet
+	local Second = custom.Second
+	local Third = custom.Third
+	if #firstSet > 10 then
+		error("firstSet cannot contain more than 5 items")
+	end
+	if #Second > 10 then
+		error("Second cannot contain more than 10 items")
+	end
+	if #Third > 10 then
+		error("Third cannot contain more than 10 items")
+	end
+	local hund = math.floor(index / 100)
+	index %= 100
+	local ten = math.floor(index / 10)
+	index %= 10
+	local one = index
+	return (firstSet[one + 1] or "") ..(Second[ten + 1] or "") ..(Third[hund + 1] or "")
+end
+
+--[[
+must use the customSuffix function to access this
+but have it as ur own if u want
+firstSet = {"", "U","D","T","Qd","Qn","Sx","Sp","Oc","No"}
+Second = {"", "De","Vt","Tg","qg","Qg","sg","Sg","Og","Ng"}
+Third = {"", "Ce", "Du","Tr","Qa","Qi","Se","Si","Ot","Ni"}
+ ]]
+function Bn.customShort(val: any, customSuffix: CustomSuffixTable , digits: number?): string
+	digits = digits or 0
+	val = Bn.convert(val)
+	local man, exp = val.man, val.exp
+	man = Bn.showDigits(man, digits)
+	if exp ~= exp then return 'NaN' end
+	if exp == math.huge then return man >= 0 and 'Inf' or '-Inf' end
+	if man == 0 then return '0' end
+	if exp < 0 then
+		local index = math.floor(-exp / 3)
+		if index <= #first then
+			return '1/' ..man.. first[index + 1]
+		end
+		return '1/' ..man.. Bn.customSuffix(customSuffix ,index-1)
+	end
+	if exp >= 3 and exp < 9 then
+		return Bn.Comma(val)
+	end
+	if exp < 3 then
+		local num = Bn.toNumber(val)
+		return tostring(Bn.showDigits(num, digits))
+	end
+	local index = math.floor(exp/3)
+	if index < #first then
+		return man .. first[index+1] or ''
+	end
+	local suffix = index - 1
+	return man .. Bn.suffixPart(suffix)
+end
+
 --[[
 helper function to help convert BN to HN
 ]]
 function hnnormalize(man: number, layer: number, exp: number): HN
-	if man == 0 or man ~= man then
-		if man ~= man or exp ~= exp then
-			return hnNaN
-		end
-		return hnZero
-	end
+	if man == 0 then return {man = 0, layer = 0, exp = 0} end
+	if man ~= man or exp ~= exp then return {man = 1, layer = 0, exp = 0/0} end
 	local sign = 1
 	if man < 0 then
 		sign = -1
 		man = -man
 	end
-	if man < 1 then
-		local shift = math.log10(math.abs(man))
-		man *= 10
-		exp -= 1
-	elseif man >= 10 then
-		local shift = math.log10(math.abs(man))
-		man /= 10
-		exp += 1
+	if layer == 0 then
+		if man >= 10 then
+			man /= 10
+			exp += 1
+		end
+		if man < 1 then
+			man *=10
+			exp -= 1
+		end
 	end
-	man = man * sign
 	if exp >= 308 then
 		layer += 1
 		exp = math.log10(exp)
 	end
-	local fracL = layer % 1
-	if fracL ~= 0 then
-		exp *= 10^fracL
-		layer -= fracL
+	if layer > 0 and exp < 1 then
+		exp = 10^exp
+		layer -= 1
 	end
-	local frac = exp % 1
-	if frac ~= 0 then
-		man *= 10^frac
-		exp -= frac
+	if layer == math.huge or exp == math.huge then
+		return {man = 1, layer = math.huge, exp = math.huge}
 	end
+	if layer < 0 then return {man = 1, layer = 0, exp = 0/0} end
+	man *= sign
 	return {man = man, layer = layer, exp = exp}
 end
 
 -- able to convert BN to HN which will last longer then BN
 function Bn.toHN(val: any): HN
 	val = Bn.convert(val)
-	local BN = Bn.new(val.man, val.exp)
-	local man, exp = BN.man, BN.exp
+	local man, exp = val.man, val.exp
 	local layer = 0
 	return hnnormalize(man, layer, exp)
 end
