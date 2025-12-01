@@ -62,7 +62,7 @@ function Bn.toNumber(val: BN): number
 	return val.man * 10^val.exp
 end
 
--- converts BN to string to store into a StringValue, base toHyper is 308 change it to what u want like 10
+-- converts BN to string to store into a StringValue, base toHyper is 308 change it to what u want like 1000
 function Bn.toStr(val: BN, toHyper: number?): string
 	toHyper = toHyper or 308
 	local man: number, exp: number = val.man, val.exp
@@ -882,19 +882,12 @@ function hnnormalize(man: number, layer: number, exp: number): HN
 		sign = -1
 		man = -man
 	end
-	if layer == 0 then
-		if man >= 10 then
-			man /= 10
-			exp += 1
-		end
-		if man < 1 then
-			man *=10
-			exp -= 1
-		end
-	end
+	local logMan = math.floor(math.log10(man))
+	man /= 10^logMan
+	exp += logMan
 	if exp >= 308 then
-		layer += 1
 		exp = math.log10(exp)
+		layer += 1
 	end
 	if layer > 0 and exp < 1 then
 		exp = 10^exp
@@ -911,9 +904,7 @@ end
 -- able to convert BN to HN which will last longer then BN
 function Bn.toHN(val: any): HN
 	val = Bn.convert(val)
-	local man, exp = val.man, val.exp
-	local layer = 0
-	return hnnormalize(man, layer, exp)
+	return hnnormalize(val.man, 0, val.exp)
 end
 
 return Bn
