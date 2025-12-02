@@ -525,13 +525,14 @@ function Bn.suffixPart(index: number): string
 	return (firstset[one+1] or '') .. (second[ten+1] or '') .. (third[hund+1] or '')
 end
 
--- helper todo comma and only
+-- able todo 1,000 for 1e3 and doenst do . since the encode and decode doesnt like it
 function Bn.Comma(val: any): string
 	val = Bn.toNumber(val)
-	local str = tostring(val)
-	local left, num, right = string.match(str, '^([^%d]*%d)(%d*)(.-)$')
-	num = num:reverse():gsub('(%d%d%d)', '%1,')
-	return left .. num:reverse() .. right
+	local intPart = math.floor(val)
+	local str = tostring(intPart)
+	local formatted = str:reverse():gsub("(%d%d%d)", "%1,"):reverse()
+	formatted = formatted:gsub("^,", "")
+	return formatted
 end
 
 -- acts so u can do 1k for 1e3, 1e30 -No and so on
@@ -551,7 +552,7 @@ function Bn.short(val: any, digits: number?): string
 		return '1/' ..man.. Bn.suffixPart(index-1)
 	end
 	if exp >= 3 and exp < 9 then
-		return Bn.Comma(val)
+		return Bn.Comma(val, digits)
 	end
 	if exp < 3 then
 		local num = Bn.toNumber(val)
@@ -777,7 +778,7 @@ function Bn.lbencode(val: any): number
 	local exp = val.exp
 	local expHigh = math.floor(exp/ 1e5)
 	local expLow = exp % 1e5
-	local manPart = math.log10(man) * 1e8
+	local manPart = math.floor(man * 1e5)
 	local encode = sign * 1e18 + expHigh * 1e13 + expLow * 1e8 + manPart
 	return encode
 end
@@ -790,7 +791,7 @@ function Bn.lbdecode(val: number): BN
 	local expHigh = math.floor(v/1e13)
 	v %= 1e13
 	local expLow = math.floor(v/1e8)
-	local man = 10^((v%1e8) / 1e8)
+	local man = (v%1e8)/1e5
 	local exp = expHigh * 1e5 + expLow
 	local res = {man = man, exp = exp}
 	if sign == 1 then res.man = -res.man end
@@ -846,7 +847,7 @@ function Bn.customShort(val: any, customSuffix , digits: number?): string
 		return '1/' ..man.. Bn.newSuffixTable(firstSet, secondSet, thirdSet):customSuffix(index)
 	end
 	if exp >= 3 and exp < 9 then
-		return Bn.Comma(val)
+		return Bn.Comma(val, digits)
 	end
 	if exp < 3 then
 		local num = Bn.toNumber(val)
