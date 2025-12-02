@@ -767,6 +767,7 @@ function Bn.Percent(val1: any, val2: any): string
 	return Bn.format(percent) .. '%'
 end
 
+
 -- able to compute down to 2e18 for the math to handle BN to OrderedDataStore
 function Bn.lbencode(val: any): number
 	val = Bn.convert(val)
@@ -774,37 +775,34 @@ function Bn.lbencode(val: any): number
 	local sign = (val.man < 0) and 1 or 2
 	local man = math.abs(val.man)
 	local exp = val.exp
-	local expHigh = math.floor(exp / 1e5)
+	local expHigh = math.floor(exp/ 1e5)
 	local expLow = exp % 1e5
-	local manPart = math.log10(man) * 1e13
-	local expPart = expLow * 1e8
-	local encoded = sign * 1e18 + expPart + manPart
-	if expHigh > 0 then
-		encoded = encoded + expHigh * 1e12
-	end
-	return encoded
+	local manPart = math.log10(man) * 1e8
+	local encode = sign * 1e18 + expHigh * 1e13 + expLow * 1e8 + manPart
+	return encode
 end
 
 -- recomputes back to BN from number cant do ur regular math like 1 to BN since it needs to be from lbencode
 function Bn.lbdecode(val: number): BN
 	if val == 4e18 then return {man = 0, exp = 0} end
-	local sign = math.floor(val / 1e18)
-	local v = (sign == 1) and (1e18 - val) or (val - 2e18)
-	local expHigh = math.floor(v / 1e12)
-	v = v % 1e12
-	local expLow = math.floor(v / 1e8)
-	local man = 10^((v % 1e8) / 1e13)
-	local res = Bn.new(man, expHigh * 1e5 + expLow)
+	local sign = math.floor(val/ 1e18)
+	local v = val - sign * 1e18
+	local expHigh = math.floor(v/1e13)
+	v %= 1e13
+	local expLow = math.floor(v/1e8)
+	local man = 10^((v%1e8) / 1e8)
+	local exp = expHigh * 1e5 + expLow
+	local res = {man = man, exp = exp}
 	if sign == 1 then res.man = -res.man end
 	return res
 end
 
--- able to compute as max for setting 1e3 as ur new instead of setting to old as 0
-function Bn.encodeData(val: number, oldData: number)
-	local new = Bn.lbdecode(val)
-	if oldData == nil then return Bn.lbencode(new) end
-	local old = Bn.lbdecode(oldData)
-	local keep = Bn.max(old, new)
+-- makes sure that 1e30 is the max lets say 1e3 is ur cash rn but u had 1e30 Cash that oldData will be stored as its max
+function Bn.encodeData(val: any, oldData: any): number
+	local newBN = Bn.convert(val)
+	if oldData == nil then return Bn.lbencode(newBN) end
+	local oldBN = Bn.lbdecode(oldData)
+	local keep = Bn.max(newBN, oldBN)
 	return Bn.lbencode(keep)
 end
 
