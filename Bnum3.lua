@@ -532,7 +532,8 @@ function Bn.Comma(val: any): string
 	local str = tostring(intPart)
 	local formatted = str:reverse():gsub("(%d%d%d)", "%1,"):reverse()
 	formatted = formatted:gsub("^,", "")
-	return formatted
+	local frac = string.format('%.2f', val - intPart):sub(2)
+	return formatted .. frac
 end
 
 -- acts so u can do 1k for 1e3, 1e30 -No and so on
@@ -600,7 +601,7 @@ function Bn.toHyperE(val: any): string
 		if e<= 308 then
 			return tostring(math.floor(e))
 		end
-		local top = math.floor(math.log10(e))
+		local top = math.floor(math.log10(e) * 100 + 0.001) / 100
 		local frac = e/ 10^top
 		return math.floor(frac * 100 + 0.001) / 100 ..'e' .. hyperE(top)
 	end
@@ -768,41 +769,46 @@ function Bn.Percent(val1: any, val2: any): string
 	return Bn.format(percent) .. '%'
 end
 
-
+local manScale = 1e4 -- max scale to make sure that its efficent for setting up BN
+local expMul = 1e8 -- the same scale as man
+local signOffset = 5e15 -- signs offset to handle the correct decode
 -- able to compute down to 2e18 for the math to handle BN to OrderedDataStore
-function Bn.lbencode(val: any): number
+function Bn.lbencode(val: any, signType: number?): number
 	val = Bn.convert(val)
-	if val.man == 0 then return 4e18 end
-	local sign = (val.man < 0) and 1 or 2
-	local man = math.abs(val.man)
-	local exp = val.exp
-	local expHigh = math.floor(exp/ 1e5)
-	local expLow = exp % 1e5
-	local manPart = math.floor(man * 1e5)
-	local encode = sign * 1e18 + expHigh * 1e13 + expLow * 1e8 + manPart
-	return encode
+	local man, exp = val.man, val.exp
+	if man == 0 then	return 4e18	end
+	local shift = math.floor(math.log10(math.abs(man)))
+	man = man / (10 ^ shift)
+	exp = exp + shift
+	if exp < 1 then exp = 1 end
+	local sign = (man < 0) and -1 or 1
+	local absMan = math.abs(man)
+	man = math.abs(man)
+	local expEnc = math.floor(math.log10(exp) * expMul)
+	return (sign < 0 and signOffset or 0) + expEnc * manScale + math.floor((man - 1) * manScale)
 end
 
--- recomputes back to BN from number cant do ur regular math like 1 to BN since it needs to be from lbencode
 function Bn.lbdecode(val: number): BN
-	if val == 4e18 then return {man = 0, exp = 0} end
-	local sign = math.floor(val/ 1e18)
-	local v = val - sign * 1e18
-	local expHigh = math.floor(v/1e13)
-	v %= 1e13
-	local expLow = math.floor(v/1e8)
-	local man = (v%1e8)/1e5
-	local exp = expHigh * 1e5 + expLow
-	local res = {man = man, exp = exp}
-	if sign == 1 then res.man = -res.man end
-	return res
+	if val == 4e18 then return zero end
+	local sign = 1
+	if val >= signOffset then
+		sign = -1
+		val -= signOffset
+	end
+	local expEnc = math.floor(val / manScale)
+	local manInt = val % manScale
+	local expLog = expEnc / expMul
+	local exp = 10 ^ expLog
+	local man = 1 + (manInt / manScale)
+	man *= sign
+	return { man = man, exp = math.round(exp) }
 end
 
 -- makes sure that 1e30 is the max lets say 1e3 is ur cash rn but u had 1e30 Cash that oldData will be stored as its max
 function Bn.encodeData(val: any, oldData: any): number
 	local newBN = Bn.convert(val)
 	if oldData == nil then return Bn.lbencode(newBN) end
-	local oldBN = Bn.lbdecode(oldData)
+	local oldBN = Bn.lbdecode(Bn.lbencode(oldData))
 	local keep = Bn.max(newBN, oldBN)
 	return Bn.lbencode(keep)
 end
