@@ -491,19 +491,26 @@ function Bn.timeConvert(val: any): string
 	local minutes = math.floor((seconds % 3600) / 60)
 	local secs = seconds % 60
 	local wholeSec = math.floor(secs)
-	local ms = math.floor((secs - wholeSec) * 1000)
 	local parts = {}
 	if days > 0 then table.insert(parts, days .. "d") end
 	if hours > 0 then table.insert(parts, hours .. "h") end
 	if minutes > 0 then table.insert(parts, minutes .. "m") end
-	if wholeSec > 0 or (#parts == 0 and ms == 0) then
+	if wholeSec > 0 or (#parts == 0) then
 		table.insert(parts, wholeSec .. "s")
-	end
-	if ms > 0 then
-		table.insert(parts, ms .. "ms")
 	end
 	if wholeSec == 0 then return 'Ready' end
 	return table.concat(parts, ":")
+end
+
+-- able todo 1,000 for 1e3 and doenst do . since the encode and decode doesnt like it
+function Bn.Comma(val: any): string
+	val = Bn.toNumber(val)
+	local intPart = math.floor(val)
+	local str = tostring(intPart)
+	local formatted = str:reverse():gsub("(%d%d%d)", "%1,"):reverse()
+	formatted = formatted:gsub("^,", "")
+	local frac = string.format('%.2f', val - intPart):sub(2)
+	return formatted .. frac
 end
 
 local first = {'', 'k', 'm', 'b'}
@@ -520,17 +527,6 @@ function Bn.suffixPart(index: number): string
 	return (firstset[one+1] or '') .. (second[ten+1] or '') .. (third[hund+1] or '')
 end
 
--- able todo 1,000 for 1e3 and doenst do . since the encode and decode doesnt like it
-function Bn.Comma(val: any): string
-	val = Bn.toNumber(val)
-	local intPart = math.floor(val)
-	local str = tostring(intPart)
-	local formatted = str:reverse():gsub("(%d%d%d)", "%1,"):reverse()
-	formatted = formatted:gsub("^,", "")
-	local frac = string.format('%.2f', val - intPart):sub(2)
-	return formatted .. frac
-end
-
 -- acts so u can do 1k for 1e3, 1e30 -No and so on
 function Bn.short(val: any, digits: number?): string
 	digits = digits or 2
@@ -542,12 +538,12 @@ function Bn.short(val: any, digits: number?): string
 	if exp < 0 then
 		local index = math.floor(-exp / 3)
 		man = math.floor(man * 100+ 0.001) / 100
-		if index <= #first then
+		if index <= 3 then
 			return '1/' ..man.. first[index + 1]
 		end
 		return '1/' ..man.. Bn.suffixPart(index-1)
 	end
-	if exp >= 3 and exp < 9 then
+	if exp >= 3 and exp < 5 then
 		return Bn.Comma(val, digits)
 	end
 	if exp < 3 then
@@ -555,12 +551,13 @@ function Bn.short(val: any, digits: number?): string
 		return tostring(math.floor(num * 100 + 0.001) / 100)
 	end
 	local index = math.floor(exp/3)
-	if index < #first then
-		return man .. first[index+1] or ''
+	local rem = exp % 3
+	local scaled = man * 10^rem
+	scaled = math.floor(scaled * (10^digits) + 0.001) / (10^digits)
+	if index <= 3 then
+		return scaled .. (first[index + 1] or '')
 	end
-	local suffix = index - 1
-	man = math.floor(man * 100 + 0.001) / 100
-	return man .. Bn.suffixPart(suffix)
+	return scaled .. Bn.suffixPart(index - 1)
 end
 
 -- acts like short but on a different note as in grabs exp instead so like 1e2 is just 1e2 after 1e1000 its E1k up to E100UCe
