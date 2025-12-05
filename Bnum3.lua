@@ -27,6 +27,10 @@ function normalize(man: number, exp: number): BN
 	local logMan = math.floor(math.log10(math.abs(man)))
 	man /= 10^logMan
 	exp += logMan
+	if man > 0 and man < 1 then
+		man *= 10
+		exp -= 1
+	end
 	man = man * sign
 	if exp >= math.huge then return inf elseif exp <= -math.huge then return neginf end
 	return {man = man, exp = exp}
@@ -86,7 +90,7 @@ function Bn.fromString(val: string): BN
 	local exp: number
 	if str:find('e') then
 		local expBN = Bn.fromString(str)
-		exp = math.floor(expBN.man) * 10^ expBN.exp
+		exp = expBN.man * 10^ expBN.exp
 	else
 		exp = tonumber(str):: number
 		if not exp then return nan end
@@ -503,14 +507,13 @@ function Bn.timeConvert(val: any): string
 end
 
 -- able todo 1,000 for 1e3 and doenst do . since the encode and decode doesnt like it
-function Bn.Comma(val: any): string
+function Bn.Comma(val: any, digits: number): string
 	val = Bn.toNumber(val)
-	local intPart = math.floor(val)
+	local intPart = math.floor(val * 10^digits + 0.001) / 10^digits
 	local str = tostring(intPart)
 	local formatted = str:reverse():gsub("(%d%d%d)", "%1,"):reverse()
 	formatted = formatted:gsub("^,", "")
-	local frac = string.format('%.2f', val - intPart):sub(2)
-	return formatted .. frac
+	return formatted
 end
 
 local first = {'', 'k', 'm', 'b'}
@@ -535,12 +538,10 @@ function Bn.short(val: any, digits: number?): string
 	if exp ~= exp then return 'NaN' end
 	if exp == math.huge then return man >= 0 and 'Inf' or '-Inf' end
 	if man == 0 then return '0' end
-	if exp < 0 then
+	if exp <= -3 then
 		local index = math.floor(-exp / 3)
 		man = math.floor(man * 100+ 0.001) / 100
-		if index <= 3 then
-			return '1/' ..man.. first[index + 1]
-		end
+		if index <= 3 then return '1/' ..man.. first[index + 1] end
 		return '1/' ..man.. Bn.suffixPart(index-1)
 	end
 	if exp >= 3 and exp < 5 then
@@ -554,9 +555,7 @@ function Bn.short(val: any, digits: number?): string
 	local rem = exp % 3
 	local scaled = man * 10^rem
 	scaled = math.floor(scaled * (10^digits) + 0.001) / (10^digits)
-	if index <= 3 then
-		return scaled .. (first[index + 1] or '')
-	end
+	if index <= 3 then return scaled .. (first[index + 1] or '')	end
 	return scaled .. Bn.suffixPart(index - 1)
 end
 
@@ -568,7 +567,7 @@ function Bn.shortE(val: any): string
 	if exp ~= exp then return "NaN" end
 	if exp == math.huge then return man >= 0 and "Inf" or "-Inf" end
 	if man == 0 then return "0" end
-	if exp < 3000 then
+	if exp < 1000 then
 		man = math.floor(man * 10^lf) / 10^lf
 		return man .. 'e' .. math.floor(exp)
 	end
@@ -606,9 +605,8 @@ function Bn.format(val: any, digits: number?): string
 		return Bn.toHyperE(val)
 	elseif Bn.meeq(val, '1e3e3') then
 		return Bn.shortE(val)
-	else
-		return Bn.short(val, digits)
 	end
+	return Bn.short(val, digits)
 end
 
 -- gets the lowest like 1, 1.5e10 only grabs 1
@@ -735,16 +733,10 @@ function Bn.fmod(val1: any, val2: any): BN
 end
 
 --computes a log growth step: log10(val + 10^(sqrt(log10(val+10))))
-function Bn.HyperRootLog(val: any, depth: number, root: any, weight: any): BN
-	val, root, weight = Bn.convert(val), Bn.convert(root), Bn.convert(weight)
-	for _ = 1, depth do
-		val = Bn.log10(val)
-		if Bn.eq(val, zero) then break end
-	end
-	val = Bn.root(val, root)
-	val = Bn.mul(val, weight)
-	if not Bn.me(zero, val) then return zero end
-	return val
+function Bn.HyperRootLog(val: any): BN
+	val = Bn.log10(val)
+	val = Bn.sqrt(val)
+	return Bn.new(val.man, val.exp)
 end
 
 --creates it so if 100/1000 shows as 10%
@@ -764,6 +756,7 @@ end
 local manScale = 1e13 -- to rescale to 13 digits for man
 local expScale = 1e14 -- to rescale exp to 14 digits
 local signOffset = 1e18 -- signs offset to handle the correct decode
+
 -- able to compute down to 2e18 for the math to handle BN to OrderedDataStore
 function Bn.lbencode(val: any, signType: number?): number
 	val = Bn.convert(val)
@@ -834,7 +827,7 @@ function Bn.customShort(val: any, customSuffix , digits: number?): string
 	if exp ~= exp then return 'NaN' end
 	if exp == math.huge then return man >= 0 and 'Inf' or '-Inf' end
 	if man == 0 then return '0' end
-	if exp < 0 then
+	if exp < -4 then
 		man = math.floor(man * 100 +0.001) / 100
 		local index = math.floor(-exp / 3)
 		if index <= #first then
