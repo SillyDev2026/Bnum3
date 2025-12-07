@@ -27,10 +27,6 @@ function normalize(man: number, exp: number): BN
 	local logMan = math.floor(math.log10(math.abs(man)))
 	man /= 10^logMan
 	exp += logMan
-	if man > 0 and man < 1 then
-		man *= 10
-		exp -= 1
-	end
 	man = man * sign
 	if exp >= math.huge then return inf elseif exp <= -math.huge then return neginf end
 	return {man = man, exp = exp}
@@ -90,7 +86,7 @@ function Bn.fromString(val: string): BN
 	local exp: number
 	if str:find('e') then
 		local expBN = Bn.fromString(str)
-		exp = expBN.man * 10^ expBN.exp
+		exp = math.floor(expBN.man) * 10^ expBN.exp
 	else
 		exp = tonumber(str):: number
 		if not exp then return nan end
@@ -495,25 +491,19 @@ function Bn.timeConvert(val: any): string
 	local minutes = math.floor((seconds % 3600) / 60)
 	local secs = seconds % 60
 	local wholeSec = math.floor(secs)
+	local ms = math.floor((secs - wholeSec) * 1000)
 	local parts = {}
 	if days > 0 then table.insert(parts, days .. "d") end
 	if hours > 0 then table.insert(parts, hours .. "h") end
 	if minutes > 0 then table.insert(parts, minutes .. "m") end
-	if wholeSec > 0 or (#parts == 0) then
+	if wholeSec > 0 or (#parts == 0 and ms == 0) then
 		table.insert(parts, wholeSec .. "s")
+	end
+	if ms > 0 then
+		table.insert(parts, ms .. "ms")
 	end
 	if wholeSec == 0 then return 'Ready' end
 	return table.concat(parts, ":")
-end
-
--- able todo 1,000 for 1e3 and doenst do . since the encode and decode doesnt like it
-function Bn.Comma(val: any, digits: number): string
-	val = Bn.toNumber(val)
-	local intPart = math.floor(val * 10^digits + 0.001) / 10^digits
-	local str = tostring(intPart)
-	local formatted = str:reverse():gsub("(%d%d%d)", "%1,"):reverse()
-	formatted = formatted:gsub("^,", "")
-	return formatted
 end
 
 local first = {'', 'k', 'm', 'b'}
@@ -530,6 +520,18 @@ function Bn.suffixPart(index: number): string
 	return (firstset[one+1] or '') .. (second[ten+1] or '') .. (third[hund+1] or '')
 end
 
+-- able todo 1,000 for 1e3 and doenst do . since the encode and decode doesnt like it
+function Bn.Comma(val: any): string
+	val = Bn.toNumber(val)
+	local intPart = math.floor(val)
+	local str = tostring(intPart)
+	local formatted = str:reverse():gsub("(%d%d%d)", "%1,"):reverse()
+	formatted = formatted:gsub("^,", "")
+	local frac = string.format('%.2f', val - intPart):sub(2)
+	return formatted .. frac
+end
+
+-- acts so u can do 1k for 1e3, 1e30 -No and so on
 -- acts so u can do 1k for 1e3, 1e30 -No and so on
 function Bn.short(val: any, digits: number?): string
 	digits = digits or 2
@@ -558,7 +560,6 @@ function Bn.short(val: any, digits: number?): string
 	if index <= 3 then return scaled .. (first[index + 1] or '')	end
 	return scaled .. Bn.suffixPart(index - 1)
 end
-
 -- acts like short but on a different note as in grabs exp instead so like 1e2 is just 1e2 after 1e1000 its E1k up to E100UCe
 function Bn.shortE(val: any): string
 	val = Bn.convert(val)
@@ -605,8 +606,9 @@ function Bn.format(val: any, digits: number?): string
 		return Bn.toHyperE(val)
 	elseif Bn.meeq(val, '1e3e3') then
 		return Bn.shortE(val)
+	else
+		return Bn.short(val, digits)
 	end
-	return Bn.short(val, digits)
 end
 
 -- gets the lowest like 1, 1.5e10 only grabs 1
@@ -733,10 +735,16 @@ function Bn.fmod(val1: any, val2: any): BN
 end
 
 --computes a log growth step: log10(val + 10^(sqrt(log10(val+10))))
-function Bn.HyperRootLog(val: any): BN
-	val = Bn.log10(val)
-	val = Bn.sqrt(val)
-	return Bn.new(val.man, val.exp)
+function Bn.HyperRootLog(val: any, depth: number, root: any, weight: any): BN
+	val, root, weight = Bn.convert(val), Bn.convert(root), Bn.convert(weight)
+	for _ = 1, depth do
+		val = Bn.log10(val)
+		if Bn.eq(val, zero) then break end
+	end
+	val = Bn.root(val, root)
+	val = Bn.mul(val, weight)
+	if not Bn.me(zero, val) then return zero end
+	return val
 end
 
 --creates it so if 100/1000 shows as 10%
@@ -753,38 +761,38 @@ function Bn.Percent(val1: any, val2: any): string
 	return Bn.format(percent) .. '%'
 end
 
-local manScale = 1e13 -- to rescale to 13 digits for man
-local expScale = 1e14 -- to rescale exp to 14 digits
-local signOffset = 1e18 -- signs offset to handle the correct decode
-
 -- able to compute down to 2e18 for the math to handle BN to OrderedDataStore
-function Bn.lbencode(val: any, signType: number?): number
+function Bn.lbencode(val: any): number
 	val = Bn.convert(val)
 	local man, exp = val.man, val.exp
-	if man == 0 then	return 4e18	end
-	local sign = (man < 0) and 1 or 2
+	if man == 0 then return 4e18 end
+	local sign = (man < 0) and -1 or 1
 	man = math.abs(man)
-	local val_enc = sign * signOffset
-	local exp_part = exp * expScale
-	local man_part = math.log10(man) * manScale
-	if sign == 2 then
-		val_enc += exp_part + man_part
-	elseif sign == 1 then
-		val_enc += exp_part + man_part
-		val_enc = 1e17 - val_enc -- invert for negative
+	if exp < 18 then
+		return sign * math.floor(man * 10^exp + 0.5)
 	end
-	return val_enc
+	local scale = 1e16 / 308
+	local manFactor = 1e14
+	local encoded = sign * (math.log10(exp+1) * scale + math.log10(man) * manFactor)
+	return math.abs(encoded)
 end
 
--- to make sure that encode is going to go back to BN
 function Bn.lbdecode(val: number): BN
-	if val == 4e18 then return { man = 0, exp = 0 } end
-	local sign = math.floor(val / signOffset)
-	local v = (sign == 1) and (1e18 - val) or (val - 2e18)
-	local exp = math.floor(v / expScale)
-	local man = 10 ^ ((v % expScale) / manScale)
-	if sign == 1 then man = -man end
-	return { man = man, exp = exp }
+	if val == 4e18 then return zero end
+	local sign = (val < 0) and -1 or 1
+	val = math.abs(val)
+	if val < 9e18 then
+		local exp = math.floor(math.log10(val))
+		local man = val / 10^exp
+		return Bn.new(man * sign, exp)
+	end
+	local scale = 1e16 / 308
+	local manFactor = 1e14
+	local manLog = val % manFactor
+	local expLog = (val - manLog) / scale
+	local exp = 10^expLog - 1
+	local man = 10^(manLog / manFactor)
+	return {man = man * sign, exp = exp}
 end
 
 -- makes sure that 1e30 is the max lets say 1e3 is ur cash rn but u had 1e30 Cash that oldData will be stored as its max
@@ -827,7 +835,7 @@ function Bn.customShort(val: any, customSuffix , digits: number?): string
 	if exp ~= exp then return 'NaN' end
 	if exp == math.huge then return man >= 0 and 'Inf' or '-Inf' end
 	if man == 0 then return '0' end
-	if exp < -4 then
+	if exp < 0 then
 		man = math.floor(man * 100 +0.001) / 100
 		local index = math.floor(-exp / 3)
 		if index <= #first then
