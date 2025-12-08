@@ -410,27 +410,13 @@ able to compute for 0 or 1 or -1 for doing le, leeq, me, meeq and meeq
 ]]
 function Bn.compare(val1: any, val2: any): number
 	val1, val2 = Bn.convert(val1), Bn.convert(val2)
-	if val1.exp ~= val1.exp or val2.exp ~= val2.exp then
-		return 0
-	end
-	if val1.exp == math.huge or val2.exp == math.huge then
-		if val1.exp == math.huge and val2.exp == math.huge then
-			if val1.man == val2.man then return 0 end
-			return val1.man > val2.man:: number and 1 or -1
-		elseif val1.exp == math.huge then
-			return val1.man > 0 and 1 or -1
-		else
-			return val2.man > 0 and -1 or 1
-		end
-	end
-	if val1.man == 0 and val2.man == 0 then return 0 end
 	if val1.exp ~= val2.exp then
-		return val1.exp > val2.exp:: number and 1 or -1
+		return (val1.exp > val2.exp) and 1 or -1
 	end
-	if math.abs(val1.man - val2.man) < 1e-12 then
-		return 0
+	if val1.man ~= val2.man then
+		return (val1.man > val2.man) and 1 or -1
 	end
-	return val1.man > val2.man and 1 or -1
+	return 0
 end
 
 -- computes as val1 == val2
@@ -624,17 +610,11 @@ function Bn.min<T...>(...: T...): BN
 end
 
 -- gets the best out of the ... so if u have 1, 5, '1e50' it gets the '1e50'
-function Bn.max<T...>(...: T...): BN
-	local args = {...}
-	if #args == 0 then return zero end
-	local best = Bn.convert(args[1])
-	for i = 2, #args do
-		local val = Bn.convert(args[i])
-		if Bn.compare(val, best) > 0 then
-			best = val
-		end
+function Bn.max(val1: any, val2: any): BN
+	if val1.exp ~= val2.exp then
+		return (val1.exp > val2.exp) and val1 or val2
 	end
-	return best
+	return (val1.man > val2.man) and val1 or val2
 end
 
 -- clamps val = 0, min {man=0, exp=0}, max = BN max
@@ -753,7 +733,7 @@ function Bn.Percent(val1: any, val2: any): string
 	return Bn.format(percent) .. '%'
 end
 
-local expScale = 1e12
+local expScale = 1e6
 local manScale = 1e6
 
 -- able to compute as 1e3 to 6.02059991328e11 in encode
@@ -767,7 +747,7 @@ function Bn.lbencode(val: any): number
 	local expInt = math.floor(expLog * expScale + 0.5)
 	local manLog = math.log10(man)
 	local manInt = math.floor(manLog * manScale + 0.5)
-	return sign * (expInt + manInt)
+	return sign * (expInt * 1e6 + manInt)
 end
 
 -- converts encode like 6.02059991328e11 back to 1e3
@@ -775,8 +755,8 @@ function Bn.lbdecode(val: number): BN
 	if val == 4e18 then return zero end
 	local sign = (val < 0) and -1 or 1
 	val = math.abs(val)
-	local expPart = math.floor(val)
-	local manPart = val - expPart
+	local expPart = math.floor(val/1e6)
+	local manPart = val % 1e6
 	local exp = math.floor(10^(expPart / expScale) - 1+0.001)
 	local man = 10^(manPart / manScale)
 	return Bn.new(man * sign, exp)
@@ -784,11 +764,13 @@ end
 
 -- makes sure that 1e30 is the max lets say 1e3 is ur cash rn but u had 1e30 Cash that oldData will be stored as its max
 function Bn.encodeData(val: any, oldData: any): number
-	local newBN = Bn.convert(val)
-	if oldData == nil then return Bn.lbencode(newBN) end
-	local oldBN = Bn.lbdecode(oldData)
-	local keep = Bn.max(newBN, oldBN)
-	return Bn.lbencode(keep)
+	local new = Bn.convert(val)
+	if oldData == nil then return Bn.lbencode(val) end
+	if oldData then
+		local old = Bn.lbdecode(oldData)
+		new = Bn.max(old, new)
+	end
+	return Bn.lbencode(new)
 end
 
 local hnNaN: HN = {man = 1, layer = 0/0, exp = 0/0}
