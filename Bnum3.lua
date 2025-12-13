@@ -52,16 +52,14 @@ function Bn.fromNumber(val: number): BN
 	if val ~= val then return nan end
 	local exp = math.floor(math.log10(math.abs(val)))
 	local man = val / 10^exp
-	return Bn.new(man ,exp)
+	return {man=man, exp=exp}
 end
 
 -- converts BN back to number so {man = 1.5, exp= 2} is 150
 function Bn.toNumber(val: BN): number
 	if val.exp >= 308 then return math.huge end
 	local man, exp = val.man, val.exp
-	local result = man * 10^exp
-	local scaled = math.floor(result * 100 + 0.001)/ 100
-	return scaled
+	return math.round((man * 10^ exp) * 100 + 0.001) / 100
 end
 
 -- converts BN to string to store into a StringValue, base toHyper is 308 change it to what u want like 1000
@@ -491,15 +489,13 @@ function Bn.timeConvert(val: any): string
 	if wholeSec > 0 or (#parts == 0) then
 		table.insert(parts, wholeSec .. "s")
 	end
-	if wholeSec == 0 then return 'Ready' end
 	return table.concat(parts, ":")
 end
 
 -- able todo 1,000 for 1e3 and doenst do . since the encode and decode doesnt like it
 function Bn.Comma(val: any, digits: number): string
 	val = Bn.toNumber(val)
-	local intPart = math.floor(val * 10^digits + 0.001) / 10^digits
-	local str = tostring(intPart)
+	local str = tostring(val)
 	local formatted = str:reverse():gsub("(%d%d%d)", "%1,"):reverse()
 	formatted = formatted:gsub("^,", "")
 	return formatted
@@ -510,13 +506,11 @@ local firstset = {"", "U","D","T","Qd","Qn","Sx","Sp","Oc","No"}
 local second = {"", "De","Vt","Tg","qg","Qg","sg","Sg","Og","Ng"}
 local third = {"", "Ce", "Du","Tr","Qa","Qi","Se","Si","Ot","Ni"}
 
-function Bn.suffixPart(index: number): string
-	local hund = math.floor(index/100)
-	index = math.fmod(index, 100)
-	local ten = math.floor(index/10)
-	index = math.fmod(index, 10)
-	local one = math.floor(index/1)
-	return (firstset[one+1] or '') .. (second[ten+1] or '') .. (third[hund+1] or '')
+function Bn.suffixPart(x: number): string
+	local a = x % 10
+	local b = (x // 10) % 10
+	local c = (x // 100) % 10
+	return	firstset[a + 1] ..second[b + 1] ..third[c + 1]
 end
 
 -- acts so u can do 1k for 1e3, 1e30 -No and so on
@@ -533,19 +527,19 @@ function Bn.short(val: any, digits: number?): string
 		if index <= 3 then return '1/' ..man.. first[index + 1] end
 		return '1/' ..man.. Bn.suffixPart(index-1)
 	end
-	if exp >= 3 and exp < 5 then
-		return Bn.Comma(val, digits)
-	end
 	if exp < 3 then
 		local num = Bn.toNumber(val)
 		return tostring(num)
+	end
+	if exp >= 3 and exp < 9 then
+		return Bn.Comma(val, digits)
 	end
 	local index = math.floor(exp/3)
 	local rem = exp % 3
 	local scaled = man * 10^rem
 	scaled = math.floor(scaled * (10^digits) + 0.001) / (10^digits)
 	if index <= 3 then return scaled .. (first[index + 1] or '')	end
-	return scaled .. Bn.suffixPart(index - 1)
+	return scaled .. Bn.suffixPart(index-1)
 end
 
 -- acts like short but on a different note as in grabs exp instead so like 1e2 is just 1e2 after 1e1000 its E1k up to E100UCe
@@ -571,21 +565,18 @@ function Bn.toScienctific(val: BN): string
 end
 
 -- converts 1e1000 down to 1e1e3
-function Bn.toHyperE(val: any): string
+function Bn.toHyperE(val: any, toHyper: number?): string
+	toHyper = toHyper or 308
 	val = Bn.convert(val)
 	local man, exp = val.man, val.exp
 	if exp ~= exp then return "NaN" end
 	if exp == math.huge then return man >= 0 and "Inf" or "-Inf" end
 	if man == 0 then return "0" end
-	local function hyperE(e: number): string
-		if e<= 308 then
-			return tostring(math.floor(e))
-		end
-		local top = math.floor(math.log10(e) * 100 + 0.001) / 100
-		local frac = e/ 10^top
-		return math.floor(frac * 100 + 0.001) / 100 ..'e' .. hyperE(top)
+	if exp >= toHyper then
+		local fromNum = Bn.fromNumber(exp)
+		return man .. 'e' .. Bn.toHyperE(fromNum, toHyper)
 	end
-	return man ..'e' .. hyperE(exp)
+	return man .. 'e' .. exp
 end
 
 --formats short(1e3) to 1k, shortE(1e1e3) acts as E1k and toHyperE(1e1e61) is just 1e1e61
