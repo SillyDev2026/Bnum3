@@ -852,7 +852,7 @@ function Bn.customShort(val: any, customSuffix , digits: number?): string
 		elseif index == 0 then
 			return '1/' .. scaled
 		end
-		return '1/' ..scaled.. Bn.newSuffixTable(firstSet, secondSet, thirdSet):customSuffix(index)
+		return '1/' ..scaled.. Bn.newSuffixTable(firstSet, secondSet, thirdSet):customSuffix(index-1)
 	end
 	if exp >= 3 and exp < 9 then
 		return Bn.Comma(val, digits)
