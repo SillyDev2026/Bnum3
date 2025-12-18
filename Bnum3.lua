@@ -512,7 +512,6 @@ function Bn.timeConvert(val: any): string
 	if wholeSec > 0 or (#parts == 0) then
 		table.insert(parts, wholeSec .. "s")
 	end
-	if wholeSec == 0 then return 'Ready' end
 	return table.concat(parts, ":")
 end
 
@@ -550,7 +549,7 @@ function Bn.short(val: any, digits: number?): string
 	if exp ~= exp then return 'NaN' end
 	if exp == math.huge then return man >= 0 and 'Inf' or '-Inf' end
 	if man == 0 then return '0' end
-	if exp <= 0 then
+	if exp <= -3 then
 		local index = math.floor(math.abs(exp) / 3)
 		local rem = math.abs(exp) % 3
 		local scaled = man * 10^rem
@@ -842,7 +841,7 @@ function Bn.customShort(val: any, customSuffix , digits: number?): string
 	if exp ~= exp then return 'NaN' end
 	if exp == math.huge then return man >= 0 and 'Inf' or '-Inf' end
 	if man == 0 then return '0' end
-	if exp <= 0 then
+	if exp <= -3 then
 		man = math.floor(man * 100 +0.001) / 100
 		local index = math.floor(-exp / 3)
 		local scaled=  -exp % 3
