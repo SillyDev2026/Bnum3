@@ -32,6 +32,11 @@ function normalize(man: number, exp: number): BN
 		exp -= 1
 	end
 	man = man * sign
+	local frac = exp % 1
+	if frac ~= 0 then
+		man *= 10^frac
+		exp -= frac
+	end
 	if exp >= math.huge then return inf elseif exp <= -math.huge then return neginf end
 	return {man = man, exp = exp}
 end
@@ -358,7 +363,7 @@ function Bn.pow10(val: any, rawPow10: boolean?): BN
 	return Bn.new(man, exp)
 end
 
--- is the natural logfor log(val) and not log(val1, val2)
+-- is the natural log for log(val) and not log(val1, val2)
 function Bn.logn(val: any): BN
 	val = Bn.convert(val)
 	local man, exp = val.man, val.exp
@@ -715,7 +720,7 @@ function Bn.exp(val: any): BN
 	if val.man == 0 then return one end
 	if val.exp == math.huge then return inf end
 	if val.exp ~= val.exp then return nan end
-	local pow = Bn.mul(val, 0.4342944819032518)
+	local pow = Bn.mul(val, math.log10(2.718281828459045))
 	return Bn.pow10(pow)
 end
 
