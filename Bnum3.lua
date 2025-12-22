@@ -32,11 +32,6 @@ function normalize(man: number, exp: number): BN
 		exp -= 1
 	end
 	man = man * sign
-	local frac = exp % 1
-	if frac ~= 0 then
-		man *= 10^frac
-		exp -= frac
-	end
 	if exp >= math.huge then return inf elseif exp <= -math.huge then return neginf end
 	return {man = man, exp = exp}
 end
@@ -57,13 +52,14 @@ function Bn.fromNumber(val: number): BN
 	if val ~= val then return nan end
 	local exp = math.floor(math.log10(math.abs(val)))
 	local man = val / 10^exp
-	return Bn.new(man ,exp)
+	return {man=man, exp=exp}
 end
 
 -- converts BN back to number so {man = 1.5, exp= 2} is 150
 function Bn.toNumber(val: BN): number
 	if val.exp >= 308 then return math.huge end
-	return val.man * 10^val.exp
+	local man, exp = val.man, val.exp
+	return math.round((man * 10^ exp) * 100 + 0.001) / 100
 end
 
 -- converts BN to string to store into a StringValue, base toHyper is 308 change it to what u want like 1000
@@ -224,7 +220,7 @@ function Bn.recip(val: any): BN
 	if val.man ~= val.man or val.exp ~= val.exp then return nan end
 	if val.exp == math.huge then if val.man < 0 then return zero end return zero end
 	local man, exp = 1 / val.man, -val.exp
-	return {man = man, exp = exp}
+	return {man=man,exp=exp}
 end
 
 -- does the inverse of mul but can do canRecip means mul(val1, recip(val2))
@@ -303,12 +299,46 @@ end
 
 --[[
  acts like pow but instead of pow(val, 2) its just
- 
-pow10(mul(val, log10(2)))
+log2 = math.log10(2)
+(val.exp + math.log10(val.man)) * log2
+math.floor(totalExp)
+10^(totalExp - intExp)
 ]]
 function Bn.pow2(val: any): BN
 	val = Bn.convert(val)
-	return Bn.pow10(Bn.mul(val, math.log10(2)))
+	if val.man == 0 then
+		return one
+	end
+	if val.man ~= val.man then
+		return nan
+	end
+	if val.exp == math.huge then
+		return inf
+	end
+	local log2 = math.log10(2)
+	local totalExp = (val.exp + math.log10(val.man)) * log2
+	local intExp = math.floor(totalExp)
+	local man = 10^(totalExp - intExp)
+	return Bn.new(man, intExp)
+end
+
+-- same as pow2 but instead its log10(5)
+function Bn.pow5(val: any): BN
+	val = Bn.convert(val)
+	if val.man == 0 then
+		return one
+	end
+	if val.man ~= val.man then
+		return nan
+	end
+	if val.exp == math.huge then
+		return inf
+	end
+	local log2 = math.log10(5)
+	local totalExp = (val.exp + math.log10(val.man)) * log2
+	local intExp = math.floor(totalExp)
+	local man = 10^(totalExp - intExp)
+	return Bn.new(man, intExp)
 end
 
 --[[
@@ -353,22 +383,36 @@ function Bn.log10(val: any): BN
 	return Bn.new(newM, newE)
 end
 
+-- computes as half of log10()
+function Bn.log5(val: any): BN
+	val = Bn.convert(val)
+	local man, exp = val.man, val.exp
+	if man <= 0 then return nan end
+	local log = (math.log10(man)+exp)/math.log10(5)
+	if math.abs(log) < 10 then return Bn.new(log,0) end
+	local newE = math.floor(math.log10(math.abs(log)))
+	local newM = log / (10^newE)
+	return Bn.new(newM, newE)
+end
+
+-- is 5x smaller then log10()
+function Bn.log2(val: any): BN
+	val = Bn.convert(val)
+	local man, exp = val.man, val.exp
+	if man <= 0 then return nan end
+	local log = (math.log10(man)+exp)/math.log10(2)
+	if math.abs(log) < 10 then return Bn.new(log,0) end
+	local newE = math.floor(math.log10(math.abs(log)))
+	local newM = log / (10^newE)
+	return Bn.new(newM, newE)
+end
+
 --[[
 works as logn(val) but also works as log(val1, val2)
 ]]
 function Bn.log(val1: any, val2: any): BN
-	val1 = Bn.convert(val1)
-	local man1, exp1 = val1.man, val1.exp
-	if val2 == nil then return Bn.logn(val1) end
-	val2 = Bn.convert(val2)
-	local man2, exp2 = val2.man, val2.exp
-	local logNum = math.log10(man1) + exp1
-	local logBase = math.log10(man2) + exp2
-	if logBase == 0 then return inf end
-	local res = logNum / logBase
-	local newE = math.floor(res)
-	local newM = 10^(res - newE)
-	return Bn.new(newM, newE)
+	if not val2 then return Bn.logn(val1) end
+	return Bn.div(Bn.log10(val1), Bn.log10(val2))
 end
 
 --[[
@@ -415,32 +459,13 @@ able to compute for 0 or 1 or -1 for doing le, leeq, me, meeq and meeq
 ]]
 function Bn.compare(val1: any, val2: any): number
 	val1, val2 = Bn.convert(val1), Bn.convert(val2)
-	if val1.exp ~= val1.exp or val2.exp ~= val2.exp then
-		return 0
+	if val1.exp ~= val2.exp then
+		return (val1.exp > val2.exp) and 1 or -1
 	end
-	if val1.exp == math.huge or val2.exp == math.huge then
-		if val1.exp == math.huge and val2.exp == math.huge then
-			if val1.man == val2.man then return 0 end
-			return val1.man > val2.man and 1 or -1
-		elseif val1.exp == math.huge then
-			return val1.man > 0 and 1 or -1
-		else
-			return val2.man > 0 and -1 or 1
-		end
+	if val1.man ~= val2.man then
+		return (val1.man > val2.man) and 1 or -1
 	end
-	if val1.man == 0 and val2.man == 0 then return 0 end
-	if val1.exp > val2.exp then
-		return 1
-	elseif val1.exp < val2.exp then
-		return -1
-	end
-	if math.abs(val1.man - val2.man) < 1e-12 then
-		return 0
-	elseif val1.man > val2.man then
-		return 1
-	else
-		return -1
-	end
+	return 0
 end
 
 -- computes as val1 == val2
@@ -461,13 +486,13 @@ end
 -- computes as val1 <= val2
 function Bn.leeq(val1: any, val2: any): boolean
 	local com = Bn.compare(val1, val2)
-	return com <= 0
+	return com < 0 or com == 0
 end
 
 -- computes as val1 >= val2
 function Bn.meeq(val1: any, val2: any): boolean
 	local com = Bn.compare(val1, val2)
-	return com >= 0
+	return com > 0 or com == 0
 end
 
 -- computes as val1 < middle and val2 < middle
@@ -515,29 +540,25 @@ function Bn.timeConvert(val: any): string
 	return table.concat(parts, ":")
 end
 
+-- able todo 1,000 for 1e3 and doenst do . since the encode and decode doesnt like it
+function Bn.Comma(val: any, digits: number): string
+	val = Bn.toNumber(val)
+	local str = tostring(val)
+	local formatted = str:reverse():gsub("(%d%d%d)", "%1,"):reverse()
+	formatted = formatted:gsub("^,", "")
+	return formatted
+end
+
 local first = {'', 'k', 'm', 'b'}
 local firstset = {"", "U","D","T","Qd","Qn","Sx","Sp","Oc","No"}
 local second = {"", "De","Vt","Tg","qg","Qg","sg","Sg","Og","Ng"}
 local third = {"", "Ce", "Du","Tr","Qa","Qi","Se","Si","Ot","Ni"}
 
-function Bn.suffixPart(index: number): string
-	local hund = math.floor(index/100)
-	index = math.fmod(index, 100)
-	local ten = math.floor(index/10)
-	index = math.fmod(index, 10)
-	local one = math.floor(index/1)
-	return (firstset[one+1] or '') .. (second[ten+1] or '') .. (third[hund+1] or '')
-end
-
--- able todo 1,000 for 1e3 and doenst do . since the encode and decode doesnt like it
-function Bn.Comma(val: any, digits: number?): string
-	digits = digits or 2
-	val = Bn.toNumber(val)
-	local intPart = math.floor(val * 10^digits + 0.001) / 10^digits
-	local str = tostring(intPart)
-	local formatted = str:reverse():gsub("(%d%d%d)", "%1,"):reverse()
-	formatted = formatted:gsub("^,", "")
-	return formatted
+function Bn.suffixPart(x: number): string
+	local a = x % 10
+	local b = (x // 10) % 10
+	local c = (x // 100) % 10
+	return	firstset[a + 1] ..second[b + 1] ..third[c + 1]
 end
 
 -- acts so u can do 1k for 1e3, 1e30 -No and so on
@@ -545,25 +566,18 @@ function Bn.short(val: any, digits: number?): string
 	digits = digits or 2
 	val = Bn.convert(val)
 	local man, exp = val.man, val.exp
-	local lf = exp % 3
 	if exp ~= exp then return 'NaN' end
 	if exp == math.huge then return man >= 0 and 'Inf' or '-Inf' end
 	if man == 0 then return '0' end
 	if exp <= -3 then
-		local index = math.floor(math.abs(exp) / 3)
-		local rem = math.abs(exp) % 3
-		local scaled = man * 10^rem
-		scaled = math.floor(scaled * 10^digits + 0.001) / 10^digits
-		if index <= #first then
-			return '1/' ..scaled.. first[index + 1]
-		elseif index == 0 then
-			return '1/' .. scaled
-		end
-		return '1/' ..scaled.. Bn.suffixPart(index-1)
+		local index = math.floor(-exp / 3)
+		man = math.floor(man * 100+ 0.001) / 100
+		if index <= 3 then return '1/' ..man.. first[index + 1] end
+		return '1/' ..man.. Bn.suffixPart(index-1)
 	end
 	if exp < 3 then
 		local num = Bn.toNumber(val)
-		return tostring(math.floor(num * 10^digits + 0.001) / 10^digits)
+		return tostring(num)
 	end
 	if exp >= 3 and exp < 9 then
 		return Bn.Comma(val, digits)
@@ -571,17 +585,13 @@ function Bn.short(val: any, digits: number?): string
 	local index = math.floor(exp/3)
 	local rem = exp % 3
 	local scaled = man * 10^rem
-	scaled = math.floor(scaled * 10^digits + 0.001) / 10^digits
-	if index < #first then
-		return scaled .. first[index+1] or ''
-	end
-	local suffix = index - 1
-	return scaled .. Bn.suffixPart(suffix)
+	scaled = math.floor(scaled * (10^digits) + 0.001) / (10^digits)
+	if index <= 3 then return scaled .. (first[index + 1] or '')	end
+	return scaled .. Bn.suffixPart(index-1)
 end
 
 -- acts like short but on a different note as in grabs exp instead so like 1e2 is just 1e2 after 1e1000 its E1k up to E100UCe
-function Bn.shortE(val: any, digits: number?): string
-	digits = digits or 2
+function Bn.shortE(val: any): string
 	val = Bn.convert(val)
 	local man, exp = val.man, val.exp
 	local lf = exp % 3
@@ -589,8 +599,8 @@ function Bn.shortE(val: any, digits: number?): string
 	if exp == math.huge then return man >= 0 and "Inf" or "-Inf" end
 	if man == 0 then return "0" end
 	if exp < 1000 then
-		man = math.floor(man * 10^digits + 0.001) / 10^digits
-		return man ..'e' .. exp
+		man = math.floor(man * 10^lf) / 10^lf
+		return man .. 'e' .. math.floor(exp)
 	end
 	local expBn = Bn.fromNumber(exp)
 	local expStr = Bn.short(expBn)
@@ -612,7 +622,6 @@ function Bn.toHyperE(val: any, toHyper: number?): string
 	if man == 0 then return "0" end
 	if exp >= toHyper then
 		local fromNum = Bn.fromNumber(exp)
-		fromNum.man = math.floor(fromNum.man * 100 + 0.001)/ 100
 		return man .. 'e' .. Bn.toHyperE(fromNum, toHyper)
 	end
 	return man .. 'e' .. exp
@@ -620,10 +629,10 @@ end
 
 --formats short(1e3) to 1k, shortE(1e1e3) acts as E1k and toHyperE(1e1e61) is just 1e1e61
 function Bn.format(val: any, digits: number?): string
-	if Bn.meeq(val, '1e1e220') then
+	if Bn.meeq(val, '1e1e20') then
 		return Bn.toHyperE(val)
 	elseif Bn.meeq(val, '1e3e3') then
-		return Bn.shortE(val, digits)
+		return Bn.shortE(val)
 	end
 	return Bn.short(val, digits)
 end
@@ -643,17 +652,11 @@ function Bn.min<T...>(...: T...): BN
 end
 
 -- gets the best out of the ... so if u have 1, 5, '1e50' it gets the '1e50'
-function Bn.max<T...>(...: T...): BN
-	local args = {...}
-	if #args == 0 then return zero end
-	local best = Bn.convert(args[1])
-	for i = 2, #args do
-		local val = Bn.convert(args[i])
-		if Bn.compare(val, best) > 0 then
-			best = val
-		end
+function Bn.max(val1: any, val2: any): BN
+	if val1.exp ~= val2.exp then
+		return (val1.exp > val2.exp) and val1 or val2
 	end
-	return best
+	return (val1.man > val2.man) and val1 or val2
 end
 
 -- clamps val = 0, min {man=0, exp=0}, max = BN max
@@ -772,7 +775,7 @@ function Bn.Percent(val1: any, val2: any): string
 	return Bn.format(percent) .. '%'
 end
 
-local expScale = 1e12
+local expScale = 1e6
 local manScale = 1e6
 
 -- able to compute as 1e3 to 6.02059991328e11 in encode
@@ -786,7 +789,7 @@ function Bn.lbencode(val: any): number
 	local expInt = math.floor(expLog * expScale + 0.5)
 	local manLog = math.log10(man)
 	local manInt = math.floor(manLog * manScale + 0.5)
-	return sign * (expInt + manInt)
+	return sign * (expInt * 1e6 + manInt)
 end
 
 -- converts encode like 6.02059991328e11 back to 1e3
@@ -794,8 +797,8 @@ function Bn.lbdecode(val: number): BN
 	if val == 4e18 then return zero end
 	local sign = (val < 0) and -1 or 1
 	val = math.abs(val)
-	local expPart = math.floor(val)
-	local manPart = val - expPart
+	local expPart = math.floor(val/1e6)
+	local manPart = val % 1e6
 	local exp = math.floor(10^(expPart / expScale) - 1+0.001)
 	local man = 10^(manPart / manScale)
 	return Bn.new(man * sign, exp)
@@ -803,11 +806,13 @@ end
 
 -- makes sure that 1e30 is the max lets say 1e3 is ur cash rn but u had 1e30 Cash that oldData will be stored as its max
 function Bn.encodeData(val: any, oldData: any): number
-	local newBN = Bn.convert(val)
-	if oldData == nil then return Bn.lbencode(newBN) end
-	local oldBN = Bn.lbdecode(oldData)
-	local keep = Bn.max(newBN, oldBN)
-	return Bn.lbencode(keep)
+	local new = Bn.convert(val)
+	if oldData == nil then return Bn.lbencode(val) end
+	if oldData then
+		local old = Bn.lbdecode(oldData)
+		new = Bn.max(old, new)
+	end
+	return Bn.lbencode(new)
 end
 
 local hnNaN: HN = {man = 1, layer = 0/0, exp = 0/0}
@@ -841,17 +846,13 @@ function Bn.customShort(val: any, customSuffix , digits: number?): string
 	if exp ~= exp then return 'NaN' end
 	if exp == math.huge then return man >= 0 and 'Inf' or '-Inf' end
 	if man == 0 then return '0' end
-	if exp <= -3 then
+	if exp < -4 then
 		man = math.floor(man * 100 +0.001) / 100
 		local index = math.floor(-exp / 3)
-		local scaled=  -exp % 3
-		scaled = math.floor(scaled * 10^digits + 0.001) / 10^digits
 		if index <= #first then
-			return '1/' ..scaled.. first[index + 1]
-		elseif index == 0 then
-			return '1/' .. scaled
+			return '1/' ..man.. first[index + 1]
 		end
-		return '1/' ..scaled.. Bn.newSuffixTable(firstSet, secondSet, thirdSet):customSuffix(index-1)
+		return '1/' ..man.. Bn.newSuffixTable(firstSet, secondSet, thirdSet):customSuffix(index)
 	end
 	if exp >= 3 and exp < 9 then
 		return Bn.Comma(val, digits)
@@ -875,42 +876,6 @@ function Bn.abs(val: any): BN
 		return Bn.new(-val.man, val.exp)
 	end
 	return val
-end
-
---[[
-helper function to help convert BN to HN
-]]
-function hnnormalize(man: number, layer: number, exp: number): HN
-	if man == 0 then return {man = 0, layer = 0, exp = 0} end
-	if man ~= man or exp ~= exp then return {man = 1, layer = 0, exp = 0/0} end
-	local sign = 1
-	if man < 0 then
-		sign = -1
-		man = -man
-	end
-	local logMan = math.floor(math.log10(man))
-	man /= 10^logMan
-	exp += logMan
-	if exp >= 308 then
-		exp = math.log10(exp)
-		layer += 1
-	end
-	if layer > 0 and exp < 1 then
-		exp = 10^exp
-		layer -= 1
-	end
-	if layer == math.huge or exp == math.huge then
-		return {man = 1, layer = math.huge, exp = math.huge}
-	end
-	if layer < 0 then return {man = 1, layer = 0, exp = 0/0} end
-	man *= sign
-	return {man = man, layer = layer, exp = exp}
-end
-
--- able to convert BN to HN which will last longer then BN
-function Bn.toHN(val: any): HN
-	val = Bn.convert(val)
-	return hnnormalize(val.man, 0, val.exp)
 end
 
 return Bn
