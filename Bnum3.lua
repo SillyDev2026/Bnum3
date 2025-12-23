@@ -376,7 +376,7 @@ function Bn.logn(val: any): BN
 	local man, exp = val.man, val.exp
 	if man <= 0 then return nan end
 	local logN = math.log(man) + exp * math.log(10)
-	return Bn.new(logN, 0)
+	return Bn.fromNumber(logN)
 end
 
 -- is the log10(val) so 1e10 is just 1e1
