@@ -32,11 +32,6 @@ function normalize(man: number, exp: number): BN
 		exp -= 1
 	end
 	man = man * sign
-	local frac = exp % 1
-	if frac ~= 0 then
-		man *= 10^frac
-		exp -= frac
-	end
 	if exp >= math.huge then return inf elseif exp <= -math.huge then return neginf end
 	return {man = man, exp = exp}
 end
@@ -49,6 +44,10 @@ and also able to compute exp as decimal to convert back to man as ex 1.25 from e
 ]]
 function Bn.new(man: number, exp: number): BN
 	return normalize(man, exp)
+end
+
+function Bn.rawBN(man: number, exp: number): BN
+	return {man=man, exp=exp}
 end
 
 -- converts lets say 15 to 1.5e1 so 100 is 1e2 1000 is 1e3 and so on
@@ -381,7 +380,7 @@ function Bn.log10(val: any): BN
 	if man <= 0 then return nan end
 	local logVal = math.log10(man) + exp
 	if math.abs(logVal) < 10 then
-		return Bn.new(logVal, 0)
+		return Bn.rawBN(logVal, 0)
 	end
 	local newE = math.floor(math.log10(math.abs(logVal)))
 	local newM = logVal / (10^newE)
