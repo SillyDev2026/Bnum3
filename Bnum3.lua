@@ -27,9 +27,12 @@ function normalize(man: number, exp: number): BN
 	local logMan = math.floor(math.log10(math.abs(man)))
 	man /= 10^logMan
 	exp += logMan
-	if man > 0 and man < 1 then
-		man *= 10
-		exp -= 1
+	if man >= 10 then
+		man/=10
+		exp += 1
+	elseif man < 1 and man > 0 then
+		man*=10
+		exp-=1
 	end
 	man = man * sign
 	if exp >= math.huge then return inf elseif exp <= -math.huge then return neginf end
@@ -359,6 +362,11 @@ function Bn.pow10(val: any, rawPow10: boolean?): BN
 	if rawPow10 then
 		return {man = man, exp = exp}
 	end
+	local frac = exp % 1
+	if frac ~= 0 then
+		man*=10^frac
+		exp-=frac
+	end
 	return Bn.new(man, exp)
 end
 
@@ -368,9 +376,7 @@ function Bn.logn(val: any): BN
 	local man, exp = val.man, val.exp
 	if man <= 0 then return nan end
 	local logN = math.log(man) + exp * math.log(10)
-	local newE = math.floor(logN)
-	local newM = 10^(logN - newE)
-	return Bn.new(newM, newE)
+	return Bn.new(logN, 0)
 end
 
 -- is the log10(val) so 1e10 is just 1e1
@@ -613,7 +619,8 @@ end
 
 -- just like toString but instead its just man .. 'e' .. exp so 1.23e1308 doesnt convert toHyperE
 function Bn.toScienctific(val: BN): string
-	return val.man .. 'e' .. val.exp
+	local man, exp = val.man, val.exp
+	return man .. 'e' .. math.floor(exp)
 end
 
 -- converts 1e1000 down to 1e1e3
