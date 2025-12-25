@@ -2,7 +2,6 @@
 --!optimize 2
 
 type BN = {man: number, exp: number}
-type HN = {man: number, layer: number, exp: number}
 
 local one: BN = {man =1, exp = 0}
 local zero: BN = {man=0,exp=0}
@@ -63,8 +62,9 @@ function Bn.fromNumber(val: number): BN
 end
 
 -- converts BN back to number so {man = 1.5, exp= 2} is 150
-function Bn.toNumber(val: BN): number
-	if val.exp >= 308 then return math.huge end
+function Bn.toNumber(val: any): number
+	val = Bn.convert(val)
+	if val.man >= 1.797 and val.exp >= 308 then return math.huge end
 	local man, exp = val.man, val.exp
 	return math.round((man * 10^ exp) * 100 + 0.001) / 100
 end
@@ -469,11 +469,32 @@ able to compute for 0 or 1 or -1 for doing le, leeq, me, meeq and meeq
 ]]
 function Bn.compare(val1: any, val2: any): number
 	val1, val2 = Bn.convert(val1), Bn.convert(val2)
-	if val1.exp ~= val2.exp then
-		return (val1.exp > val2.exp) and 1 or -1
+	local man1, man2 = val1.man, val2.man
+	local exp1, exp2 = val1.exp, val2.exp
+	if man1 ~= man1 or man2 ~= man2 then
+		return 0
 	end
-	if val1.man ~= val2.man then
-		return (val1.man > val2.man) and 1 or -1
+	if man1 == 0 and man2 == 0 then
+		return 0
+	elseif man1 == 0 then
+		return (man2 > 0) and -1 or 1
+	elseif man2 == 0 then
+		return (man1 > 0) and 1 or -1
+	end
+	local sign1 = (man1 < 0) and -1 or 1
+	local sign2 = (man2 < 0) and -1 or 1
+	if sign1 ~= sign2 then
+		return (sign1 > sign2) and 1 or -1
+	end
+	if exp1 ~= exp2 then
+		if sign1 > 0 then
+			return (exp1 > exp2) and 1 or -1
+		else
+			return (exp1 > exp2) and -1 or 1
+		end
+	end
+	if man1 ~= man2 then
+		return (man1 > man2) and 1 or -1
 	end
 	return 0
 end
@@ -496,13 +517,13 @@ end
 -- computes as val1 <= val2
 function Bn.leeq(val1: any, val2: any): boolean
 	local com = Bn.compare(val1, val2)
-	return com < 0 or com == 0
+	return com <= 0
 end
 
 -- computes as val1 >= val2
 function Bn.meeq(val1: any, val2: any): boolean
 	local com = Bn.compare(val1, val2)
-	return com > 0 or com == 0
+	return com >= 0
 end
 
 -- computes as val1 < middle and val2 < middle
@@ -826,9 +847,6 @@ function Bn.encodeData(val: any, oldData: any): number
 	return Bn.lbencode(new)
 end
 
-local hnNaN: HN = {man = 1, layer = 0/0, exp = 0/0}
-local hnZero: HN = {man = 0, layer = 0, exp = 0}
-
 -- Suffix table creator
 function Bn.newSuffixTable(firstSet: {string}, secondSet: {string}, thirdSet: {string})
 	local T = {firstSet = firstSet, secondSet = secondSet, thirdSet = thirdSet}
@@ -887,6 +905,62 @@ function Bn.abs(val: any): BN
 		return Bn.new(-val.man, val.exp)
 	end
 	return val
+end
+
+local BN_meta = {}
+
+-- Arithmetic
+BN_meta.__add = function(a, b)
+	return Bn.add(a, b)
+end
+
+BN_meta.__sub = function(a, b)
+	return Bn.sub(a, b)
+end
+
+BN_meta.__unm = function(a)
+	return Bn.neg(a)
+end
+
+BN_meta.__mul = function(a, b)
+	return Bn.mul(a, b)
+end
+
+BN_meta.__div = function(a, b)
+	return Bn.div(a, b)
+end
+
+BN_meta.__pow = function(a, b)
+	return Bn.pow(a, b)
+end
+
+-- Comparisons
+BN_meta.__eq = function(a, b)
+	return Bn.eq(a, b)
+end
+
+BN_meta.__lt = function(a, b)
+	return Bn.le(a, b)
+end
+
+BN_meta.__le = function(a, b)
+	return Bn.leeq(a, b)
+end
+
+-- String representation
+BN_meta.__tostring = function(a)
+	return Bn.toHyperE(a)
+end
+
+-- Optional: automatically convert numbers to BN in operations
+BN_meta.__index = function(t, k)
+	return Bn[k]
+end
+
+-- helper to wrap BN values with metatable
+function Bn.wrap(val: any): BN
+	local bn = Bn.convert(val)
+	return setmetatable(bn, BN_meta)
 end
 
 return Bn
