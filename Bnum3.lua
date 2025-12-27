@@ -56,9 +56,7 @@ end
 function Bn.fromNumber(val: number): BN
 	if val == 0 then return zero end
 	if val ~= val then return nan end
-	local exp = math.floor(math.log10(math.abs(val)))
-	local man = val / 10^exp
-	return {man=man, exp=exp}
+	return Bn.new(val, 0)
 end
 
 -- converts BN back to number so {man = 1.5, exp= 2} is 150
@@ -85,25 +83,68 @@ end
 
 -- helps convert toStr back to BN like '1e3' back to {man = 1, exp = 3} or 1e3.1e2 back to {man = 1.5, exp = 310}
 function Bn.fromString(val: string): BN
-	local exponent = val:find('e')
-	if not exponent then
-		local num = tonumber(val)
-		if not num then return nan end
-		return Bn.fromNumber(num)
+	local len = #val
+	local i = 1
+	local man, sign, scale, seenDot = 0, 1, 0, false
+	if val:byte(1) == 45 then
+		sign = -1
+		i = 2
 	end
-	local manStr, expStr = val:match('^(.-)e(.+)$')
-	local man = tonumber(manStr)
-	if not man then return nan end
-	local str: string = expStr:: string
-	local exp: number
-	if str:find('e') then
-		local expBN = Bn.fromString(str)
-		exp = expBN.man * 10^ expBN.exp
-	else
-		exp = tonumber(str):: number
-		if not exp then return nan end
+	while i <= len do
+		local c = val:byte(i)
+		if c == 101 then break end
+		if c == 46 then
+			if seenDot then return nan end
+			seenDot = true
+			i += 1
+			continue
+		end
+		if c < 48 or c > 57 then return nan end
+		man = man * 10 + (c - 48)
+		if seenDot then scale += 1 end
+		i += 1
 	end
-	return {man = man, exp = exp}
+	man = man / (10 ^ scale) * sign
+	local exp = 0
+	if i > len then
+		return Bn.new(man, exp)
+	end
+	i += 1
+	while i <= len do
+		local chunkMan, chunkScale, seenDot = 0, 0, false
+		local neg = false
+
+		if val:byte(i) == 45 then
+			neg = true
+			i += 1
+		end
+		while i <= len do
+			local c = val:byte(i)
+			if c == 101 then break end
+			if c == 46 then
+				if seenDot then return nan end
+				seenDot = true
+				i += 1
+				continue
+			end
+			if c < 48 or c > 57 then return nan end
+			chunkMan = chunkMan * 10 + (c - 48)
+			if seenDot then chunkScale += 1 end
+			i += 1
+		end
+		if neg then chunkMan = -chunkMan end
+		local chunkValue = chunkMan / (10 ^ chunkScale)
+		if exp == 0 then
+			exp = chunkValue
+		else
+			exp = exp * (10 ^ chunkValue)
+		end
+		if i <= len and val:byte(i) == 101 then
+			i += 1
+		end
+	end
+
+	return Bn.new(man, exp)
 end
 
 --[[
@@ -386,7 +427,7 @@ function Bn.log10(val: any): BN
 	if man <= 0 then return nan end
 	local logVal = math.log10(man) + exp
 	if math.abs(logVal) < 10 then
-		return Bn.rawBN(logVal, 0)
+		return Bn.fromNumber(logVal)
 	end
 	local newE = math.floor(math.log10(math.abs(logVal)))
 	local newM = logVal / (10^newE)
@@ -471,9 +512,7 @@ function Bn.compare(val1: any, val2: any): number
 	val1, val2 = Bn.convert(val1), Bn.convert(val2)
 	local man1, man2 = val1.man, val2.man
 	local exp1, exp2 = val1.exp, val2.exp
-	if man1 ~= man1 or man2 ~= man2 then
-		return 0
-	end
+	if man1 ~= man1 or man2 ~= man2 then	return 0 end
 	if man1 == 0 and man2 == 0 then
 		return 0
 	elseif man1 == 0 then
@@ -483,9 +522,7 @@ function Bn.compare(val1: any, val2: any): number
 	end
 	local sign1 = (man1 < 0) and -1 or 1
 	local sign2 = (man2 < 0) and -1 or 1
-	if sign1 ~= sign2 then
-		return (sign1 > sign2) and 1 or -1
-	end
+	if sign1 ~= sign2 then return (sign1 > sign2) and 1 or -1 end
 	if exp1 ~= exp2 then
 		if sign1 > 0 then
 			return (exp1 > exp2) and 1 or -1
@@ -664,7 +701,7 @@ function Bn.format(val: any, digits: number?): string
 	if Bn.meeq(val, '1e1e20') then
 		return Bn.toHyperE(val)
 	elseif Bn.meeq(val, '1e3e3') then
-		return Bn.shortE(val)
+		return Bn.shortE(val, digits)
 	end
 	return Bn.short(val, digits)
 end
@@ -905,6 +942,15 @@ function Bn.abs(val: any): BN
 		return Bn.new(-val.man, val.exp)
 	end
 	return val
+end
+
+function Bn.scaleCurve(val: any, booster: any, division: any, pow: any): BN
+	local ratio  = Bn.div(val, division)
+	local shift = Bn.add(ratio, one)
+	local logV = Bn.log10(shift)
+	if Bn.le(logV, zero) then logV = one end
+	local logPow = Bn.pow(logV, pow)
+	return Bn.add(booster, logPow)
 end
 
 local BN_meta = {}
