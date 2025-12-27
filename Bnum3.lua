@@ -9,13 +9,13 @@ local inf: BN = {man =1, exp = math.huge}
 local neginf: BN = {man = -1, exp = math.huge}
 local nan: BN = {man = 1, exp = 0/0}
 
+local Bn = {}
 --[[
-able to compute man >= 10 then converts down to 1 then convert to exp
-so man = 150, exp = 0
-computes as 
-{man = 1.5, exp = 2}
+creates a new BN as in {man = 1, exp = 3} ex. 1000 but with normalize it converts it. so it doesnt do {man = 0.98, exp = 3} but its {man = 9.8, exp = 2}
+
+and also able to compute exp as decimal to convert back to man as ex 1.25 from exp 0.1
 ]]
-function normalize(man: number, exp: number): BN
+function Bn.new(man: number, exp: number): BN
 	if man == 0 or man ~= man then
 		if man ~= man or exp ~= exp then
 			return nan
@@ -36,16 +36,6 @@ function normalize(man: number, exp: number): BN
 	man = man * sign
 	if exp >= math.huge then return inf elseif exp <= -math.huge then return neginf end
 	return {man = man, exp = exp}
-end
-
-local Bn = {}
---[[
-creates a new BN as in {man = 1, exp = 3} ex. 1000 but with normalize it converts it. so it doesnt do {man = 0.98, exp = 3} but its {man = 9.8, exp = 2}
-
-and also able to compute exp as decimal to convert back to man as ex 1.25 from exp 0.1
-]]
-function Bn.new(man: number, exp: number): BN
-	return normalize(man, exp)
 end
 
 function Bn.rawBN(man: number, exp: number): BN
