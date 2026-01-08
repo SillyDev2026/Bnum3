@@ -149,6 +149,7 @@ end
 
 -- acts like 1+1 but for BN like '1e0' + '1e0' is {man = 2, exp = 0}, '1e1' + '1e0' is {man = 1.1, exp = 1}
 function Bn.add(val1: any, val2: any): BN
+	val1, val2 = Bn.convert(val1), Bn.convert(val2)
 	local man1, man2 = val1[1], val2[1]
 	local exp1, exp2 = val1[2], val2[2]
 	if exp1 > exp2 then
