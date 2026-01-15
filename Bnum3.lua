@@ -20,7 +20,7 @@ and also able to compute exp as decimal to convert back to man as ex 1.25 from e
 -- Precompute powers of 10 for fast lookup
 local POW10 = {}
 do
-	for i = 0, 308 do
+	for i = -308, 308 do
 		POW10[i] = 10 ^ i
 	end
 end
@@ -129,7 +129,7 @@ function Bn.convert(val: any): BN
 		if #val >= 3 then 
 			warn(`Failed to convert to BN cant go over 2 numbers in a table like {'{1, 2, 3}'}`)
 			warn('AutoCorrected ', val, 'to', {val[1], val[2]},' to BN\n    ', 'which is from',Bn.toStr({man = val[1], exp = val[2]}), 'to:', Bn.new(val[1], val[2]))
-			return Bn.new(val[1], val[2])
+			return {man, exp}
 		end
 		if #val == 2 then
 			local man = val[1]
@@ -174,7 +174,7 @@ end
 -- can turn .add() into .sub()
 function Bn.neg(val: any): BN
 	val = Bn.convert(val)
-	return Bn.new(-val.man, val.exp)
+	return {-val[1], val[2]}
 end
 
 -- does the inverse of add 1 - 2 = 0 to safe keep so there will be no negatives if canNeg means add(val1, neg(val2))
@@ -225,7 +225,7 @@ function Bn.recip(val: any): BN
 	val = Bn.convert(val)
 	if val[1] == 0 then return inf end
 	if val[1] ~= val[1] or val[2] ~= val[2] then return nan end
-	if val.exp == math.huge then if val.man < 0 then return zero end return zero end
+	if val[2] == math.huge then if val[1] < 0 then return zero end return zero end
 	local man, exp = 1 / val[1], -val[2]
 	return {man,exp}
 end
@@ -234,15 +234,14 @@ end
 function Bn.div(val1:any, val2:any, canRecip: boolean?)
 	canRecip = canRecip or false
 	val1 = Bn.convert(val1)
+	val2 = Bn.convert(val2)
 	if canRecip then
 		local result = Bn.mul(val1, Bn.recip(val2))
 		if result[1] < 0 then return zero end
 		return result
 	end
-	val2 = Bn.convert(val2)
 	if val2[1] == 0 then return inf end
 	if val1[1] == 0 then return zero end
-	if val1[1] == 0 or val2[1] == 0 then return zero end
 	if val1[1] ~= val1[1] or val2[1] ~= val2[1] then return nan end
 	if val1[2] == math.huge or val2[2] == math.huge then return inf end
 	local man = val1[1] / val2[1]
@@ -254,46 +253,31 @@ end
 function Bn.pow(val1: any, val2: any, raw: boolean?): BN
 	raw = raw or false
 	val1, val2 = Bn.convert(val1), Bn.convert(val2)
-	local man1, man2 = val1[1], val2[1]
-	local exp1, exp2 = val1[2], val2[2]
+	local man1, exp1 = val1[1], val1[2]
+	local man2, exp2 = val2[1], val2[2]
 	if man1 == 0 then
-		if man2 == 0 then return one end
-		return zero
+		return man2 == 0 and one or zero
 	end
+	if man1 == 1 and exp1 == 0 then return one end
+	if man2 == 0 and exp2 == 0 then return one end
 	if man1 ~= man1 or man2 ~= man2 then return nan end
-	if exp1 == math.huge then
-		if man2 < 0 then return zero end
-		return inf
-	end
-	if exp2 == math.huge then
-		if man1 < 0 then return zero end
-		return inf
-	end
+	if exp1 == math.huge then return man2 < 0 and zero or inf end
+	if exp2 == math.huge then return man1 < 0 and zero or inf end
 	if man1 < 0 then
-		local n = Bn.toNumber(val2)
+		local n = man2 * 10^exp2
 		if n % 1 ~= 0 then return nan end
-		local isOdd = (math.fmod(n, 2) ~= 0)
-		local absBase = {man = -man1, exp = exp1}
-		local res = Bn.pow(absBase, val2, raw)
+		local isOdd = (n % 2 ~= 0)
+		local res = Bn.pow({-man1, exp1}, val2, raw)
 		if isOdd then res[1] = -res[1] end
 		return res
 	end
-	if exp2 == 0 and man2 == 1 then return one end
-	if exp2 == 0 and man2 == 0 then return one end
-	if exp1 == 0 and man1 == 1 then return one end
 	local logVal1 = math.log10(man1) + exp1
-	local log_exponent = exp2 + math.log10(math.abs(man2))
-	if log_exponent > 308 then
-		if logVal1 > 0 then return inf end
-		if logVal1 < 0 then return zero end
-		return one
-	end
-	local exp2pow = man2 * (10 ^ exp2)
-	local L = logVal1 * exp2pow
+	local powExponent = man2 * (10 ^ exp2)
+	local L = logVal1 * powExponent
 	if L == math.huge then return inf end
 	if L == -math.huge then return zero end
 	local newE = math.floor(L)
-	local newM = 10 ^ (L - newE)
+	local newM = 10^(L - newE)
 	if newM >= 10 then
 		newM = newM / 10
 		newE = newE + 1
@@ -568,7 +552,7 @@ function Bn.timeConvert(val: any): string
 end
 
 -- able todo 1,000 for 1e3 and doenst do . since the encode and decode doesnt like it
-function Bn.Comma(val: any, digits: number): string
+function Bn.Comma(val: any): string
 	val = Bn.toNumber(val)
 	local str = tostring(val)
 	local formatted = str:reverse():gsub("(%d%d%d)", "%1,"):reverse()
@@ -680,13 +664,18 @@ function Bn.min<T...>(...: T...): BN
 end
 
 -- gets the best out of the ... so if u have 1, 5, '1e50' it gets the '1e50'
-function Bn.max(val1: any, val2: any): BN
-	if val1[2] ~= val2[2] then
-		return (val1[2] > val2[2]) and val1 or val2
+function Bn.max<T...>(...: T...): BN
+	local args = {...}
+	if #args == 0 then return zero end
+	local best = Bn.convert(args[1])
+	for i = 2, #args do
+		local val = Bn.convert(args[i])
+		if Bn.compare(val, best) > 0 then
+			best = val
+		end
 	end
-	return (val1[1] > val2[1]) and val1 or val2
+	return best
 end
-
 -- clamps val = 0, min {man=0, exp=0}, max = BN max
 function Bn.clamp(val: any, min: any, max: any): BN
 	if Bn.compare(min, max) > 0 then
@@ -910,6 +899,25 @@ function Bn.scaleCurve(val: any, booster: any, division: any, pow: any): BN
 	if Bn.le(logV, zero) then logV = one end
 	local logPow = Bn.pow(logV, pow)
 	return Bn.add(booster, logPow)
+end
+
+-- forgot to add this for smth like whats under
+function Bn.random(min: any, max: any): BN
+	if Bn.compare(min, max) > 0 then
+		min, max = max, min
+	end
+	local diff = Bn.sub(max, min)
+	local u = math.random()
+	local uBN = Bn.mul(diff, u)
+	return Bn.add(min, uBN)
+end
+
+-- able todo like weighted system like 1 out of 10 or smth
+function Bn.rollChance(oneIn: any): boolean
+	local chance = Bn.recip(oneIn)
+	chance = Bn.min(chance, one)
+	local roll = Bn.random(zero, one)
+	return Bn.leeq(roll, chance)
 end
 
 return Bn
