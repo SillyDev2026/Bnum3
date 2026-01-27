@@ -2,6 +2,39 @@
 local Bnum = {}
 type BN = {number}
 
+function Bnum.toNumber(val: any): number
+	local man1: number, exp1: number
+	local types = type(val)
+	if types == 'number' then
+		local exp = math.floor(math.log10(math.abs(val)))
+		man1, exp1 = val/math.pow(10, exp), exp
+	elseif types == 'string' then
+		local e = string.find(val, 'e')
+		if e then
+			man1, exp1 = tonumber(string.sub(val, 1, e-1)):: number, tonumber(string.sub(val, e+1, -1)):: number
+		else
+			local number: number = tonumber(math.abs(val)):: number
+			local exp = math.floor(math.log10(number:: number))
+			man1, exp1 = number/math.pow(10, exp), exp
+		end
+	elseif types == 'table' then
+		if #val >= 3 then 
+			warn(`Failed to convert to BN cant go over 2 numbers in a table like {'{1, 2, 3}'}`)
+			warn('AutoCorrected ', val, 'to', {val[1], val[2]},' to BN\n    ', 'which is from',Bnum.toStr({val[1], val[2]}), 'to:', {val[1], val[2]})
+			man1, exp1 = val[1], val[2]
+		end
+		if #val == 2 then
+			man1, exp1 = val[1], val[2]
+		elseif #val == 1 then
+			local exp = math.floor(math.log10(math.abs(val)))
+			man1, exp1 = val/math.pow(10, exp), exp
+		end
+	end
+	if exp1 > 308 then return math.huge end
+	local scale = man1 * math.pow(10, exp1)
+	return scale
+end
+
 function Bnum.add(val1: any, val2: any): BN
 	local man1: number, exp1: number = 0, 0
 	local man2: number, exp2: number = 0, 0
@@ -72,11 +105,9 @@ function Bnum.add(val1: any, val2: any): BN
 		man1 = man1 * math.pow(10, -diff)
 		exp1 = exp2
 	end
-	man1 += man2
-	local shift = math.floor(math.log10(math.abs(man1)))
-	exp1 += shift
-	man1 /= math.pow(10, exp1)
-	return {man1, exp1}
+	local man = man1+man2
+	local exp = math.floor(math.log10(math.abs(man)))
+	return {man/math.pow(10, exp), exp1+exp}
 end
 
 function Bnum.sub(val1: any, val2: any): BN
@@ -999,7 +1030,7 @@ function Bnum.format(val: any,digits: number?,hyperAt: number?): string
 	end
 	if exp ~= exp then return "NaN" end
 	if exp == math.huge then return man >= 0 and "Inf" or "-Inf" end
-	digits = digits or 0
+	digits = digits or 2
 	hyperAt = hyperAt or 1e20
 	if exp >= hyperAt then
 		local eexp = math.floor(math.log10(exp))
@@ -1010,7 +1041,7 @@ function Bnum.format(val: any,digits: number?,hyperAt: number?): string
 		local m = math.floor(man * 10^lf) / 10^lf
 		return m .. "e" .. exp
 	end
-	if exp >= 9 then
+	if exp >= 3 then
 		local index = math.floor(exp / 3)
 		local rem = exp % 3
 		local scaled = man * math.pow(10, rem)
@@ -1025,7 +1056,9 @@ function Bnum.format(val: any,digits: number?,hyperAt: number?): string
 		local c = (i // 100) % 10
 		return scaled .. firstset[a+1] .. second[b+1] .. third[c+1]
 	end
-	return tostring(man * 10^exp)
+	local scale = man * math.pow(10, exp)
+	scale = math.floor(scale * 100 + 0.001) / 100
+	return tostring(scale)
 end
 
 function Bnum.min<T...>(...: T...): BN
@@ -1211,7 +1244,7 @@ function Bnum.exp(val: any): BN
 	if exp ~= exp then return {0/0, 0} end
 	local pow = (man*math.pow(10, exp)) * 0.4342944819032518
 	local e = math.floor(pow)
-	return {math.pow(10, pow-e), e}
+	return {math.pow(10, pow-e), exp+e}
 end
 
 function Bnum.random(val1: any, val2: any): BN
@@ -1566,7 +1599,6 @@ function Bnum.fmod(val1: any, val2: any): BN
 		return {0, 0}
 	end
 	local diff = exp1 - exp2
-	-- if exponents are close, just scale and do integer mod
 	if diff <= 15 then
 		local n1 = man1 * 10^diff
 		local ratio = n1 % man2
