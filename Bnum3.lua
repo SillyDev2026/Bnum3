@@ -180,12 +180,10 @@ function Bnum.sub(val1: any, val2: any): BN
 		man1 = man1 * math.pow(10, -diff)
 		exp1 = exp2
 	end
-	man1 -= man2
-	local shift = math.floor(math.log10(math.abs(man1)))
-	exp1 += shift
-	man1 /= math.pow(10, exp1)
-	if man1 < 0 then man1, exp1 = 0, 0 end
-	return {man1, exp1}
+	local man = man1-man2
+	local exp = math.floor(math.log10(math.abs(man)))
+	if man < 0 then man, exp = 0, 0 end
+	return {man/math.pow(10, exp), exp1+exp}
 end
 
 function Bnum.mul(val1: any, val2: any): BN
@@ -243,15 +241,11 @@ function Bnum.mul(val1: any, val2: any): BN
 			man2, exp2 = val2/math.pow(10, exp), exp
 		end
 	end
-	man1 *= man2
-	if man1 == 0 then
-		return {0, 0}
-	end
+	local man = man1*man2
 	exp1 += exp2
-	local shift = math.floor(math.log10(man1))
-	man1/=math.pow(10, shift)
-	exp1+=shift
-	return {man1, exp1}
+	local exp = math.floor(math.log10(math.abs(man)))
+	if man < 0 then man, exp = 0, 0 end
+	return {man/math.pow(10, exp), exp1+exp}
 end
 
 function Bnum.div(val1: any, val2: any): BN
@@ -309,15 +303,11 @@ function Bnum.div(val1: any, val2: any): BN
 			man2, exp2 = val2/math.pow(10, exp), exp
 		end
 	end
-	man1 /= man2
-	if man1 == 0 then
-		return {0, 0}
-	end
+	local man = man1/man2
 	exp1 -= exp2
-	local shift = math.floor(math.log10(man1))
-	man1/=math.pow(10, shift)
-	exp1+=shift
-	return {man1, exp1}
+	local exp = math.floor(math.log10(math.abs(man)))
+	if man < 0 then man, exp = 0, 0 end
+	return {man/math.pow(10, exp), exp1+exp}
 end
 
 function Bnum.toStr(val: BN): string
@@ -1041,7 +1031,15 @@ function Bnum.format(val: any,digits: number?,hyperAt: number?): string
 		local m = math.floor(man * 10^lf) / 10^lf
 		return m .. "e" .. exp
 	end
-	if exp >= 3 then
+	if exp >= 3 and exp < 6 then
+		man *= math.pow(10, exp)
+		man = math.floor(man * math.pow(10, digits) + 0.001) / math.pow(10, digits)
+		local str = tostring(man)
+		local formatted = str:reverse():gsub("(%d%d%d)", "%1,"):reverse()
+		formatted = formatted:gsub("^,", "")
+		return formatted
+	end
+	if exp >= 6 then
 		local index = math.floor(exp / 3)
 		local rem = exp % 3
 		local scaled = man * math.pow(10, rem)
