@@ -613,7 +613,6 @@ function Bnum.cbrt(val: any): BN
 		end
 	end
 	if man1 <= 0 then return {0/0, 0} end
-	print(man1, exp1)
 	man1 ^= (1/3)
 	exp1 /= 3
 	local exp = math.floor(math.log10(man1))
@@ -623,86 +622,86 @@ function Bnum.cbrt(val: any): BN
 end
 
 function Bnum.logn(val: any): BN
-	local man1: number, exp1: number
+	local man, exp
 	local types = type(val)
 	if types == 'number' then
 		if val == 0 then
-			man1, exp1 = 0, 0
+			man, exp = 0, 0
 		else
-			local exp = math.floor(math.log10(math.abs(val)))
-			man1, exp1 = val/math.pow(10, exp), exp
+			local exp1 = math.floor(math.log10(math.abs(val)))
+			man, exp = val/math.pow(10, exp1), exp1
 		end
 	elseif types == 'string' then
 		local e = string.find(val, 'e')
 		if e then
-			man1, exp1 = tonumber(string.sub(val, 1, e-1)):: number, tonumber(string.sub(val, e+1, -1)):: number
+			man, exp = tonumber(string.sub(val, 1, e-1)):: number, tonumber(string.sub(val, e+1, -1)):: number
 		else
 			local number: number = tonumber(math.abs(val)):: number
-			local exp = math.floor(math.log10(number:: number))
-			man1, exp1 = number/math.pow(10, exp), exp
+			local exp1 = math.floor(math.log10(number:: number))
+			man, exp = number/math.pow(10, exp1), exp1
 		end
 	elseif types == 'table' then
 		if #val >= 3 then 
 			warn(`Failed to convert to BN cant go over 2 numbers in a table like {'{1, 2, 3}'}`)
 			warn('AutoCorrected ', val, 'to', {val[1], val[2]},' to BN\n    ', 'which is from',Bnum.toStr({val[1], val[2]}), 'to:', {val[1], val[2]})
-			man1, exp1 = val[1], val[2]
+			man, exp = val[1], val[2]
 		end
 		if #val == 2 then
-			man1, exp1 = val[1], val[2]
+			man, exp = val[1], val[2]
 		elseif #val == 1 then
 			local exp = math.floor(math.log10(math.abs(val)))
-			man1, exp1 = val/math.pow(10, exp), exp
+			man, exp = val/math.pow(10, exp), exp
 		end
 	end
-	if man1 <= 0 then return {0/0, 0} end
-	local logN = math.log(man1) + exp1 * 2.302585092994046
+	if man <= 0 then return {0/0, 0} end
+	local logN = math.log(man) + exp * 2.302585092994046
 	local exp = math.floor(math.log10(logN))
-	man1, exp1 = logN/math.pow(10, exp), exp
-	return {man1, exp1}
+	man, exp = logN/math.pow(10, exp), exp
+	return {man, exp}
 end
 
 function Bnum.log10(val: any): BN
-	local man1: number, exp1: number
+	local man, exp
 	local types = type(val)
 	if types == 'number' then
 		if val == 0 then
-			man1, exp1 = 0, 0
+			man, exp = 0, 0
 		else
-			local exp = math.floor(math.log10(math.abs(val)))
-			man1, exp1 = val/math.pow(10, exp), exp
+			local exp1 = math.floor(math.log10(math.abs(val)))
+			man, exp = val/math.pow(10, exp1), exp1
 		end
 	elseif types == 'string' then
 		local e = string.find(val, 'e')
 		if e then
-			man1, exp1 = tonumber(string.sub(val, 1, e-1)):: number, tonumber(string.sub(val, e+1, -1)):: number
+			man, exp = tonumber(string.sub(val, 1, e-1)):: number, tonumber(string.sub(val, e+1, -1)):: number
 		else
 			local number: number = tonumber(math.abs(val)):: number
-			local exp = math.floor(math.log10(number:: number))
-			man1, exp1 = number/math.pow(10, exp), exp
+			local exp1 = math.floor(math.log10(number:: number))
+			man, exp = number/math.pow(10, exp1), exp1
 		end
 	elseif types == 'table' then
 		if #val >= 3 then 
 			warn(`Failed to convert to BN cant go over 2 numbers in a table like {'{1, 2, 3}'}`)
 			warn('AutoCorrected ', val, 'to', {val[1], val[2]},' to BN\n    ', 'which is from',Bnum.toStr({val[1], val[2]}), 'to:', {val[1], val[2]})
-			man1, exp1 = val[1], val[2]
+			man, exp = val[1], val[2]
 		end
 		if #val == 2 then
-			man1, exp1 = val[1], val[2]
+			man, exp = val[1], val[2]
 		elseif #val == 1 then
 			local exp = math.floor(math.log10(math.abs(val)))
-			man1, exp1 = val/math.pow(10, exp), exp
+			man, exp = val/math.pow(10, exp), exp
 		end
 	end
-	if man1 <= 0 then return {0/0, 0} end
-	local logVal = math.log10(man1) + exp1
+	if man <= 0 then return {0/0, 0} end
+	local logVal = math.log10(man) + exp
 	if math.abs(logVal) < 10 then
 		local exp = math.floor(math.log10(logVal))
-		man1, exp1 = logVal/math.pow(10, exp), exp
-		return {man1, exp1}
+		man, exp = logVal/math.pow(10, exp), exp
+		return {man, exp}
 	end
 	local expShift = math.floor(math.log10(math.abs(logVal)))
 	logVal = logVal / math.pow(10, expShift)
-	return {logVal, exp1 + expShift}
+	return {logVal, exp + expShift}
 end
 
 function Bnum.log(val1: any, val2: any): BN
@@ -987,8 +986,8 @@ function Bnum.format(val: any,digits: number?,hyperAt: number?): string
 			man, exp = tonumber(string.sub(val, 1, e-1)):: number, tonumber(string.sub(val, e+1, -1)):: number
 		else
 			local number: number = tonumber(math.abs(val)):: number
-			local exp = math.floor(math.log10(number:: number))
-			man, exp = number/math.pow(10, exp), exp
+			local shift = math.floor(math.log10(number:: number))
+			man, exp = number/math.pow(10, shift), shift
 		end
 	elseif types == 'table' then
 		if #val >= 3 then 
@@ -1084,8 +1083,8 @@ function Bnum.min<T...>(...: T...): BN
 				man, exp = tonumber(string.sub(val, 1, e-1)):: number, tonumber(string.sub(val, e+1, -1)):: number
 			else
 				local number: number = tonumber(math.abs(val)):: number
-				local exp = math.floor(math.log10(number:: number))
-				man, exp = number/math.pow(10, exp), exp
+				local exp1 = math.floor(math.log10(number:: number))
+				man, exp = number/math.pow(10, exp1), exp1
 			end
 		elseif types == 'table' then
 			if #val >= 3 then 
@@ -1134,8 +1133,8 @@ function Bnum.max<T...>(...: T...): BN
 				man, exp = tonumber(string.sub(val, 1, e-1)):: number, tonumber(string.sub(val, e+1, -1)):: number
 			else
 				local number: number = tonumber(math.abs(val)):: number
-				local exp = math.floor(math.log10(number:: number))
-				man, exp = number/math.pow(10, exp), exp
+				local exp1 = math.floor(math.log10(number:: number))
+				man, exp = number/math.pow(10, exp1), exp1
 			end
 		elseif types == 'table' then
 			if #val >= 3 then 
@@ -1165,57 +1164,95 @@ function Bnum.clamp(val: any, min: any, max: any): BN
 	local vMan: number, vExp: number
 	local loMan: number, loExp: number
 	local hiMan: number, hiExp: number
-	local t = type(val)
-	if t == "number" then
-		if val == 0 then vMan, vExp = 0, 0 end
-		local e = math.floor(math.log10(math.abs(val)))
-		vMan, vExp = val / math.pow(10, e), e
-	elseif t == "string" then
-		local p = string.find(val, "e")
-		if p then
-			vMan = tonumber(string.sub(val, 1, p-1)) :: number
-			vExp = tonumber(string.sub(val, p+1))   :: number
+	local types = type(val)
+	if types == 'number' then
+		if val == 0 then
+			vMan, vExp = 0, 0
 		else
-			local n = tonumber(val) :: number
-			local e = math.floor(math.log10(math.abs(n)))
-			vMan, vExp = n / math.pow(10, e), e
+			local exp1 = math.floor(math.log10(math.abs(val)))
+			vMan, vExp = val/math.pow(10, exp1), exp1
 		end
-	else
-		vMan, vExp = val[1], val[2]
+	elseif types == 'string' then
+		local e = string.find(val, 'e')
+		if e then
+			vMan, vExp = tonumber(string.sub(val, 1, e-1)):: number, tonumber(string.sub(val, e+1, -1)):: number
+		else
+			local number: number = tonumber(math.abs(val)):: number
+			local exp1 = math.floor(math.log10(number:: number))
+			vMan, vExp = number/math.pow(10, exp1), exp1
+		end
+	elseif types == 'table' then
+		if #val >= 3 then 
+			warn(`Failed to convert to BN cant go over 2 numbers in a table like {'{1, 2, 3}'}`)
+			warn('AutoCorrected ', val, 'to', {val[1], val[2]},' to BN\n    ', 'which is from',Bnum.toStr({val[1], val[2]}), 'to:', {val[1], val[2]})
+			vMan, vExp = val[1], val[2]
+		end
+		if #val == 2 then
+			vMan, vExp = val[1], val[2]
+		elseif #val == 1 then
+			local exp = math.floor(math.log10(math.abs(val)))
+			vMan, vExp = val/math.pow(10, exp), exp
+		end
 	end
 	local t = type(min)
-	if t == "number" then
-		local e = math.floor(math.log10(math.abs(min)))
-		loMan, loExp = min / math.pow(10, e), e
-	elseif t == "string" then
-		local p = string.find(min, "e")
-		if p then
-			loMan = tonumber(string.sub(min, 1, p-1)) :: number
-			loExp = tonumber(string.sub(min, p+1))   :: number
+	if t == 'number' then
+		if val == 0 then
+			loMan, loExp = 0, 0
 		else
-			local n = tonumber(min) :: number
-			local e = math.floor(math.log10(math.abs(n)))
-			loMan, loExp = n / math.pow(10, e), e
+			local exp1 = math.floor(math.log10(math.abs(val)))
+			loMan, loExp = val/math.pow(10, exp1), exp1
 		end
-	else
-		loMan, loExp = min[1], min[2]
+	elseif t == 'string' then
+		local e = string.find(val, 'e')
+		if e then
+			loMan, loExp = tonumber(string.sub(val, 1, e-1)):: number, tonumber(string.sub(val, e+1, -1)):: number
+		else
+			local number: number = tonumber(math.abs(val)):: number
+			local exp1 = math.floor(math.log10(number:: number))
+			loMan, loExp = number/math.pow(10, exp1), exp1
+		end
+	elseif t == 'table' then
+		if #val >= 3 then 
+			warn(`Failed to convert to BN cant go over 2 numbers in a table like {'{1, 2, 3}'}`)
+			warn('AutoCorrected ', val, 'to', {val[1], val[2]},' to BN\n    ', 'which is from',Bnum.toStr({val[1], val[2]}), 'to:', {val[1], val[2]})
+			loMan, loExp = val[1], val[2]
+		end
+		if #val == 2 then
+			loMan, loExp = val[1], val[2]
+		elseif #val == 1 then
+			local exp = math.floor(math.log10(math.abs(val)))
+			loMan, loExp = val/math.pow(10, exp), exp
+		end
 	end
-	local t = type(max)
-	if t == "number" then
-		local e = math.floor(math.log10(math.abs(max)))
-		hiMan, hiExp = max / math.pow(10, e), e
-	elseif t == "string" then
-		local p = string.find(max, "e")
-		if p then
-			hiMan = tonumber(string.sub(max, 1, p-1)) :: number
-			hiExp = tonumber(string.sub(max, p+1))   :: number
+	local ty = type(max)
+	if t == 'number' then
+		if val == 0 then
+			hiMan, hiExp = 0, 0
 		else
-			local n = tonumber(max) :: number
-			local e = math.floor(math.log10(math.abs(n)))
-			hiMan, hiExp = n / math.pow(10, e), e
+			local exp1 = math.floor(math.log10(math.abs(val)))
+			hiMan, hiExp = val/math.pow(10, exp1), exp1
 		end
-	else
-		hiMan, hiExp = max[1], max[2]
+	elseif ty == 'string' then
+		local e = string.find(val, 'e')
+		if e then
+			hiMan, hiExp = tonumber(string.sub(val, 1, e-1)):: number, tonumber(string.sub(val, e+1, -1)):: number
+		else
+			local number: number = tonumber(math.abs(val)):: number
+			local exp1 = math.floor(math.log10(number:: number))
+			hiMan, hiExp = number/math.pow(10, exp1), exp1
+		end
+	elseif ty == 'table' then
+		if #val >= 3 then 
+			warn(`Failed to convert to BN cant go over 2 numbers in a table like {'{1, 2, 3}'}`)
+			warn('AutoCorrected ', val, 'to', {val[1], val[2]},' to BN\n    ', 'which is from',Bnum.toStr({val[1], val[2]}), 'to:', {val[1], val[2]})
+			hiMan, hiExp = val[1], val[2]
+		end
+		if #val == 2 then
+			hiMan, hiExp = val[1], val[2]
+		elseif #val == 1 then
+			local exp = math.floor(math.log10(math.abs(val)))
+			hiMan, hiExp = val/math.pow(10, exp), exp
+		end
 	end
 	if loExp > hiExp or (loExp == hiExp and loMan > hiMan) then
 		loMan, loExp, hiMan, hiExp = hiMan, hiExp, loMan, loExp
@@ -1230,7 +1267,7 @@ function Bnum.clamp(val: any, min: any, max: any): BN
 end
 
 function Bnum.exp(val: any): BN
-	local man: number, exp: number
+	local man, exp
 	local types = type(val)
 	if types == 'number' then
 		if val == 0 then
@@ -1245,8 +1282,8 @@ function Bnum.exp(val: any): BN
 			man, exp = tonumber(string.sub(val, 1, e-1)):: number, tonumber(string.sub(val, e+1, -1)):: number
 		else
 			local number: number = tonumber(math.abs(val)):: number
-			local exp = math.floor(math.log10(number:: number))
-			man, exp = number/math.pow(10, exp), exp
+			local exp1 = math.floor(math.log10(number:: number))
+			man, exp = number/math.pow(10, exp1), exp1
 		end
 	elseif types == 'table' then
 		if #val >= 3 then 
@@ -1278,7 +1315,7 @@ function Bnum.random(val1: any?, val2: any?): BN
 end
 
 function Bnum.lbencode(val: any): number
-	local man: number, exp: number
+	local man, exp
 	local types = type(val)
 	if types == 'number' then
 		if val == 0 then
@@ -1293,8 +1330,8 @@ function Bnum.lbencode(val: any): number
 			man, exp = tonumber(string.sub(val, 1, e-1)):: number, tonumber(string.sub(val, e+1, -1)):: number
 		else
 			local number: number = tonumber(math.abs(val)):: number
-			local exp = math.floor(math.log10(number:: number))
-			man, exp = number/math.pow(10, exp), exp
+			local exp1 = math.floor(math.log10(number:: number))
+			man, exp = number/math.pow(10, exp1), exp1
 		end
 	elseif types == 'table' then
 		if #val >= 3 then 
@@ -1380,7 +1417,7 @@ function Bnum.encodeData(val: any, oldData: any): number
 end
 
 function Bnum.floor(val: any): BN
-	local man: number, exp: number
+	local man, exp
 	local types = type(val)
 	if types == 'number' then
 		if val == 0 then
@@ -1395,8 +1432,8 @@ function Bnum.floor(val: any): BN
 			man, exp = tonumber(string.sub(val, 1, e-1)):: number, tonumber(string.sub(val, e+1, -1)):: number
 		else
 			local number: number = tonumber(math.abs(val)):: number
-			local exp = math.floor(math.log10(number:: number))
-			man, exp = number/math.pow(10, exp), exp
+			local exp1 = math.floor(math.log10(number:: number))
+			man, exp = number/math.pow(10, exp1), exp1
 		end
 	elseif types == 'table' then
 		if #val >= 3 then 
@@ -1511,7 +1548,7 @@ function Bnum.mod(val1: any, val2: any): BN
 end
 
 function Bnum.modf(val: any): (BN, BN)
-	local man: number, exp: number
+	local man, exp
 	local types = type(val)
 	if types == 'number' then
 		if val == 0 then
@@ -1526,8 +1563,8 @@ function Bnum.modf(val: any): (BN, BN)
 			man, exp = tonumber(string.sub(val, 1, e-1)):: number, tonumber(string.sub(val, e+1, -1)):: number
 		else
 			local number: number = tonumber(math.abs(val)):: number
-			local exp = math.floor(math.log10(number:: number))
-			man, exp = number/math.pow(10, exp), exp
+			local exp1 = math.floor(math.log10(number:: number))
+			man, exp = number/math.pow(10, exp1), exp1
 		end
 	elseif types == 'table' then
 		if #val >= 3 then 
@@ -1645,7 +1682,7 @@ function Bnum.fmod(val1: any, val2: any): BN
 end
 
 function Bnum.ceil(val: any): BN
-	local man: number, exp: number
+	local man, exp
 	local types = type(val)
 	if types == 'number' then
 		if val == 0 then
@@ -1660,8 +1697,8 @@ function Bnum.ceil(val: any): BN
 			man, exp = tonumber(string.sub(val, 1, e-1)):: number, tonumber(string.sub(val, e+1, -1)):: number
 		else
 			local number: number = tonumber(math.abs(val)):: number
-			local exp = math.floor(math.log10(number:: number))
-			man, exp = number/math.pow(10, exp), exp
+			local exp1 = math.floor(math.log10(number:: number))
+			man, exp = number/math.pow(10, exp1), exp1
 		end
 	elseif types == 'table' then
 		if #val >= 3 then 
