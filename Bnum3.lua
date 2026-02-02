@@ -978,8 +978,8 @@ function Bnum.format(val: any,digits: number?,hyperAt: number?): string
 		if val == 0 then
 			man, exp = 0, 0
 		else
-			local exp = math.floor(math.log10(math.abs(val)))
-			man, exp = val/math.pow(10, exp), exp
+			local shift = math.floor(math.log10(math.abs(val)))
+			man, exp = val/math.pow(10, shift), shift
 		end
 	elseif types == 'string' then
 		local e = string.find(val, 'e')
@@ -1075,8 +1075,8 @@ function Bnum.min<T...>(...: T...): BN
 			if val == 0 then
 				man, exp = 0, 0
 			else
-				local exp = math.floor(math.log10(math.abs(val)))
-				man, exp = val/math.pow(10, exp), exp
+				local exp1 = math.floor(math.log10(math.abs(val)))
+				man, exp = val/math.pow(10, exp1), exp1
 			end
 		elseif types == 'string' then
 			local e = string.find(val, 'e')
@@ -1125,8 +1125,8 @@ function Bnum.max<T...>(...: T...): BN
 			if val == 0 then
 				man, exp = 0, 0
 			else
-				local exp = math.floor(math.log10(math.abs(val)))
-				man, exp = val/math.pow(10, exp), exp
+				local exp1 = math.floor(math.log10(math.abs(val)))
+				man, exp = val/math.pow(10, exp1), exp1
 			end
 		elseif types == 'string' then
 			local e = string.find(val, 'e')
@@ -1236,8 +1236,8 @@ function Bnum.exp(val: any): BN
 		if val == 0 then
 			man, exp = 0, 0
 		else
-			local exp = math.floor(math.log10(math.abs(val)))
-			man, exp = val/math.pow(10, exp), exp
+			local exp1 = math.floor(math.log10(math.abs(val)))
+			man, exp = val/math.pow(10, exp1), exp1
 		end
 	elseif types == 'string' then
 		local e = string.find(val, 'e')
@@ -1284,8 +1284,8 @@ function Bnum.lbencode(val: any): number
 		if val == 0 then
 			man, exp = 0, 0
 		else
-			local exp = math.floor(math.log10(math.abs(val)))
-			man, exp = val/math.pow(10, exp), exp
+			local exp1 = math.floor(math.log10(math.abs(val)))
+			man, exp = val/math.pow(10, exp1), exp1
 		end
 	elseif types == 'string' then
 		local e = string.find(val, 'e')
@@ -1386,8 +1386,8 @@ function Bnum.floor(val: any): BN
 		if val == 0 then
 			man, exp = 0, 0
 		else
-			local exp = math.floor(math.log10(math.abs(val)))
-			man, exp = val/math.pow(10, exp), exp
+			local exp1 = math.floor(math.log10(math.abs(val)))
+			man, exp = val/math.pow(10, exp1), exp1
 		end
 	elseif types == 'string' then
 		local e = string.find(val, 'e')
@@ -1517,8 +1517,8 @@ function Bnum.modf(val: any): (BN, BN)
 		if val == 0 then
 			man, exp = 0, 0
 		else
-			local exp = math.floor(math.log10(math.abs(val)))
-			man, exp = val/math.pow(10, exp), exp
+			local exp1 = math.floor(math.log10(math.abs(val)))
+			man, exp = val/math.pow(10, exp1), exp1
 		end
 	elseif types == 'string' then
 		local e = string.find(val, 'e')
@@ -1651,8 +1651,8 @@ function Bnum.ceil(val: any): BN
 		if val == 0 then
 			man, exp = 0, 0
 		else
-			local exp = math.floor(math.log10(math.abs(val)))
-			man, exp = val/math.pow(10, exp), exp
+			local exp1 = math.floor(math.log10(math.abs(val)))
+			man, exp = val/math.pow(10, exp1), exp1
 		end
 	elseif types == 'string' then
 		local e = string.find(val, 'e')
