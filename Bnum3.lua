@@ -17,16 +17,24 @@ function Bnum.toNumber(val: any): number
 	local man1: number, exp1: number
 	local types = type(val)
 	if types == 'number' then
-		local exp = math.floor(math.log10(math.abs(val)))
-		man1, exp1 = val/math.pow(10, exp), exp
+		if val == 0 then
+			man1, exp1 = 0, 0
+		else
+			local exp = math.floor(math.log10(math.abs(val)))
+			man1, exp1 = val/math.pow(10, exp), exp
+		end
 	elseif types == 'string' then
 		local e = string.find(val, 'e')
 		if e then
 			man1, exp1 = tonumber(string.sub(val, 1, e-1)):: number, tonumber(string.sub(val, e+1, -1)):: number
 		else
-			local number: number = tonumber(math.abs(val)):: number
-			local exp = math.floor(math.log10(number:: number))
-			man1, exp1 = number/math.pow(10, exp), exp
+			local number: number = tonumber(val):: number
+			if number == 0 then
+				man1, exp1 = 0, 0
+			else
+				local exp = math.floor(math.log10(number:: number))
+				man1, exp1 = number/math.pow(10, exp), exp
+			end
 		end
 	elseif types == 'table' then
 		if #val >= 3 then 
