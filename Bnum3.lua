@@ -45,8 +45,12 @@ function Bnum.toNumber(val: any): number
 		if #val == 2 then
 			man1, exp1 = val[1], val[2]
 		elseif #val == 1 then
-			local exp = math.floor(math.log10(math.abs(val)))
-			man1, exp1 = val/math.pow(10, exp), exp
+			if val[1] == 0 then
+				man1, exp1 = 0, 0
+			else
+				local exp = math.floor(math.log10(math.abs(val[1])))
+				man1, exp1 = val/math.pow(10, exp), exp
+			end
 		end
 	end
 	if exp1 > 308 then return math.huge end
@@ -88,8 +92,12 @@ function Bnum.add(val1: any, val2: any): BN
 		if #val1 == 2 then
 			man1, exp1 = val1[1], val1[2]
 		elseif #val1 == 1 then
-			local exp = math.floor(math.log10(val1))
-			man1, exp1 = val1/math.pow(10, exp), exp
+			if val1[1] == 0 then
+				man1, exp1 = 0, 0
+			else
+				local exp = math.floor(math.log10(val1[1]))
+				man1, exp1 = val1[1]/math.pow(10, exp), exp
+			end
 		end
 	end
 	local t = type(val2)
@@ -122,8 +130,12 @@ function Bnum.add(val1: any, val2: any): BN
 		if #val2 == 2 then
 			man2, exp2 = val2[1], val2[2]
 		elseif #val2 == 1 then
-			local exp = math.floor(math.log10(val2))
-			man2, exp2 = val2/math.pow(10, exp), exp
+			if val2[1] == 0 then
+				man2, exp2 = 0, 0
+			else
+				local exp = math.floor(math.log10(val2[1]))
+				man2, exp2 = val1[1]/math.pow(10, exp), exp
+			end
 		end
 	end
 	if exp1 > exp2 then
@@ -183,8 +195,12 @@ function Bnum.sub(val1: any, val2: any, shouldNotGoBelowZero: boolean?): BN
 		if #val1 == 2 then
 			man1, exp1 = val1[1], val1[2]
 		elseif #val1 == 1 then
-			local exp = math.floor(math.log10(val1))
-			man1, exp1 = val1/math.pow(10, exp), exp
+			if val1[1] == 0 then
+				man1, exp1 = 0, 0
+			else
+				local exp = math.floor(math.log10(val1[1]))
+				man1, exp1 = val1[1]/math.pow(10, exp), exp
+			end
 		end
 	end
 	local t = type(val2)
@@ -217,8 +233,12 @@ function Bnum.sub(val1: any, val2: any, shouldNotGoBelowZero: boolean?): BN
 		if #val2 == 2 then
 			man2, exp2 = val2[1], val2[2]
 		elseif #val2 == 1 then
-			local exp = math.floor(math.log10(val2))
-			man2, exp2 = val2/math.pow(10, exp), exp
+			if val2[1] == 0 then
+				man2, exp2 = 0, 0
+			else
+				local exp = math.floor(math.log10(val2[1]))
+				man2, exp2 = val1[1]/math.pow(10, exp), exp
+			end
 		end
 	end
 	shouldNotGoBelowZero = shouldNotGoBelowZero or false
@@ -282,8 +302,12 @@ function Bnum.mul(val1: any, val2: any): BN
 		if #val1 == 2 then
 			man1, exp1 = val1[1], val1[2]
 		elseif #val1 == 1 then
-			local exp = math.floor(math.log10(val1))
-			man1, exp1 = val1/math.pow(10, exp), exp
+			if val1[1] == 0 then
+				man1, exp1 = 0, 0
+			else
+				local exp = math.floor(math.log10(val1[1]))
+				man1, exp1 = val1[1]/math.pow(10, exp), exp
+			end
 		end
 	end
 	local t = type(val2)
@@ -316,8 +340,12 @@ function Bnum.mul(val1: any, val2: any): BN
 		if #val2 == 2 then
 			man2, exp2 = val2[1], val2[2]
 		elseif #val2 == 1 then
-			local exp = math.floor(math.log10(val2))
-			man2, exp2 = val2/math.pow(10, exp), exp
+			if val2[1] == 0 then
+				man2, exp2 = 0, 0
+			else
+				local exp = math.floor(math.log10(val2[1]))
+				man2, exp2 = val1[1]/math.pow(10, exp), exp
+			end
 		end
 	end
 	local man = man1 * man2
@@ -363,8 +391,12 @@ function Bnum.div(val1: any, val2: any): BN
 		if #val1 == 2 then
 			man1, exp1 = val1[1], val1[2]
 		elseif #val1 == 1 then
-			local exp = math.floor(math.log10(val1))
-			man1, exp1 = val1/math.pow(10, exp), exp
+			if val1[1] == 0 then
+				man1, exp1 = 0, 0
+			else
+				local exp = math.floor(math.log10(val1[1]))
+				man1, exp1 = val1[1]/math.pow(10, exp), exp
+			end
 		end
 	end
 	local t = type(val2)
@@ -397,8 +429,12 @@ function Bnum.div(val1: any, val2: any): BN
 		if #val2 == 2 then
 			man2, exp2 = val2[1], val2[2]
 		elseif #val2 == 1 then
-			local exp = math.floor(math.log10(val2))
-			man2, exp2 = val2/math.pow(10, exp), exp
+			if val2[1] == 0 then
+				man2, exp2 = 0, 0
+			else
+				local exp = math.floor(math.log10(val2[1]))
+				man2, exp2 = val1[1]/math.pow(10, exp), exp
+			end
 		end
 	end
 	local man = man1 / man2
@@ -451,8 +487,12 @@ function Bnum.neg(val: any): BN
 		if #val == 2 then
 			man1, exp1 = val[1], val[2]
 		elseif #val == 1 then
-			local exp = math.floor(math.log10(math.abs(val)))
-			man1, exp1 = val/math.pow(10, exp), exp
+			if val[1] == 0 then
+				man1, exp1 = 0, 0
+			else
+				local exp = math.floor(math.log10(math.abs(val[1])))
+				man1, exp1 = val/math.pow(10, exp), exp
+			end
 		end
 	end
 	man1 = -man1
@@ -492,8 +532,12 @@ function Bnum.pow(val1: any, val2: any): BN
 		if #val1 == 2 then
 			man1, exp1 = val1[1], val1[2]
 		elseif #val1 == 1 then
-			local exp = math.floor(math.log10(val1))
-			man1, exp1 = val1/math.pow(10, exp), exp
+			if val1[1] == 0 then
+				man1, exp1 = 0, 0
+			else
+				local exp = math.floor(math.log10(val1[1]))
+				man1, exp1 = val1[1]/math.pow(10, exp), exp
+			end
 		end
 	end
 	local t = type(val2)
@@ -526,8 +570,12 @@ function Bnum.pow(val1: any, val2: any): BN
 		if #val2 == 2 then
 			man2, exp2 = val2[1], val2[2]
 		elseif #val2 == 1 then
-			local exp = math.floor(math.log10(val2))
-			man2, exp2 = val2/math.pow(10, exp), exp
+			if val2[1] == 0 then
+				man2, exp2 = 0, 0
+			else
+				local exp = math.floor(math.log10(val2[1]))
+				man2, exp2 = val1[1]/math.pow(10, exp), exp
+			end
 		end
 	end
 	local p = man2 * math.pow(10, exp2)
@@ -583,8 +631,12 @@ function Bnum.pow10(val: any): BN
 		if #val == 2 then
 			man1, exp1 = val[1], val[2]
 		elseif #val == 1 then
-			local exp = math.floor(math.log10(math.abs(val)))
-			man1, exp1 = val/math.pow(10, exp), exp
+			if val[1] == 0 then
+				man1, exp1 = 0, 0
+			else
+				local exp = math.floor(math.log10(val[1]))
+				man1, exp1 = val[1]/math.pow(10, exp), exp
+			end
 		end
 	end
 	local exp = man1*math.pow(10, exp1)
@@ -629,8 +681,12 @@ function Bnum.sqrt(val: any): BN
 		if #val == 2 then
 			man1, exp1 = val[1], val[2]
 		elseif #val == 1 then
-			local exp = math.floor(math.log10(math.abs(val)))
-			man1, exp1 = val/math.pow(10, exp), exp
+			if val[1] == 0 then
+				man1, exp1 = 0, 0
+			else
+				local exp = math.floor(math.log10(val[1]))
+				man1, exp1 = val[1]/math.pow(10, exp), exp
+			end
 		end
 	end
 	if man1 <= 0 then return {0/0, 0} end
@@ -672,8 +728,12 @@ function Bnum.cbrt(val: any): BN
 		if #val == 2 then
 			man1, exp1 = val[1], val[2]
 		elseif #val == 1 then
-			local exp = math.floor(math.log10(math.abs(val)))
-			man1, exp1 = val/math.pow(10, exp), exp
+			if val[1] == 0 then
+				man1, exp1 = 0, 0
+			else
+				local exp = math.floor(math.log10(val[1]))
+				man1, exp1 = val[1]/math.pow(10, exp), exp
+			end
 		end
 	end
 	if man1 <= 0 then return {0/0, 0} end
@@ -717,8 +777,12 @@ function Bnum.logn(val: any): BN
 		if #val == 2 then
 			man, exp = val[1], val[2]
 		elseif #val == 1 then
-			local exp = math.floor(math.log10(math.abs(val)))
-			man, exp = val/math.pow(10, exp), exp
+			if val[1] == 0 then
+				man, exp = 0, 0
+			else
+				local exp1 = math.floor(math.log10(val[1]))
+				man, exp = val[1]/math.pow(10, exp1), exp1
+			end
 		end
 	end
 	if man <= 0 then return {0/0, 0} end
@@ -760,8 +824,12 @@ function Bnum.log10(val: any): BN
 		if #val == 2 then
 			man, exp = val[1], val[2]
 		elseif #val == 1 then
-			local exp = math.floor(math.log10(math.abs(val)))
-			man, exp = val/math.pow(10, exp), exp
+			if val[1] == 0 then
+				man, exp = 0, 0
+			else
+				local exp1 = math.floor(math.log10(val[1]))
+				man, exp = val[1]/math.pow(10, exp1), exp1
+			end
 		end
 	end
 	if man <= 0 then return {0/0, 0} end
@@ -814,8 +882,12 @@ function Bnum.root(val1: any, val2: any): BN
 		if #val1 == 2 then
 			man1, exp1 = val1[1], val1[2]
 		elseif #val1 == 1 then
-			local exp = math.floor(math.log10(val1))
-			man1, exp1 = val1/math.pow(10, exp), exp
+			if val1[1] == 0 then
+				man1, exp1 = 0, 0
+			else
+				local exp = math.floor(math.log10(val1[1]))
+				man1, exp1 = val1[1]/math.pow(10, exp), exp
+			end
 		end
 	end
 	local t = type(val2)
@@ -848,8 +920,12 @@ function Bnum.root(val1: any, val2: any): BN
 		if #val2 == 2 then
 			man2, exp2 = val2[1], val2[2]
 		elseif #val2 == 1 then
-			local exp = math.floor(math.log10(val2))
-			man2, exp2 = val2/math.pow(10, exp), exp
+			if val2[1] == 0 then
+				man2, exp2 = 0, 0
+			else
+				local exp = math.floor(math.log10(val2[1]))
+				man2, exp2 = val1[1]/math.pow(10, exp), exp
+			end
 		end
 	end
 	if man1 < 0 then
@@ -896,8 +972,12 @@ function Bnum.compare(val1: any, val2: any): number
 		if #val1 == 2 then
 			man1, exp1 = val1[1], val1[2]
 		elseif #val1 == 1 then
-			local exp = math.floor(math.log10(val1))
-			man1, exp1 = val1/math.pow(10, exp), exp
+			if val1[1] == 0 then
+				man1, exp1 = 0, 0
+			else
+				local exp = math.floor(math.log10(val1[1]))
+				man1, exp1 = val1[1]/math.pow(10, exp), exp
+			end
 		end
 	end
 	local t = type(val2)
@@ -930,8 +1010,12 @@ function Bnum.compare(val1: any, val2: any): number
 		if #val2 == 2 then
 			man2, exp2 = val2[1], val2[2]
 		elseif #val2 == 1 then
-			local exp = math.floor(math.log10(val2))
-			man2, exp2 = val2/math.pow(10, exp), exp
+			if val2[1] == 0 then
+				man2, exp2 = 0, 0
+			else
+				local exp = math.floor(math.log10(val2[1]))
+				man2, exp2 = val1[1]/math.pow(10, exp), exp
+			end
 		end
 	end
 	if man1 ~= man1 or man2 ~= man2 then	return 0 end
@@ -1053,8 +1137,12 @@ function Bnum.abs(val: any): BN
 		if #val == 2 then
 			man1, exp1 = val[1], val[2]
 		elseif #val == 1 then
-			local exp = math.floor(math.log10(math.abs(val)))
-			man1, exp1 = val/math.pow(10, exp), exp
+			if val[1] == 0 then
+				man1, exp1 = 0, 0
+			else
+				local exp = math.floor(math.log10(val[1]))
+				man1, exp1 = val[1]/math.pow(10, exp), exp
+			end
 		end
 	end
 	local abs = man1 < 0 and -man1 or man1
@@ -1098,8 +1186,12 @@ function Bnum.format(val: any,digits: number?,hyperAt: number?): string
 		if #val == 2 then
 			man, exp = val[1], val[2]
 		elseif #val == 1 then
-			local exp = math.floor(math.log10(math.abs(val)))
-			man, exp = val/math.pow(10, exp), exp
+			if val[1] == 0 then
+				man, exp = 0, 0
+			else
+				local exp1 = math.floor(math.log10(val[1]))
+				man, exp1 = val[1]/math.pow(10, exp1), exp1
+			end
 		end
 	end
 	if exp ~= exp then return "NaN" end
@@ -1197,8 +1289,12 @@ function Bnum.min<T...>(...: T...): BN
 			if #val == 2 then
 				man, exp = val[1], val[2]
 			elseif #val == 1 then
-				local exp = math.floor(math.log10(math.abs(val)))
-				man, exp = val/math.pow(10, exp), exp
+				if val[1] == 0 then
+					man, exp = 0, 0
+				else
+					local exp1 = math.floor(math.log10(val[1]))
+					man, exp = val[1]/math.pow(10, exp1), exp1
+				end
 			end
 		end
 		if i == 1 then
@@ -1251,8 +1347,12 @@ function Bnum.max<T...>(...: T...): BN
 			if #val == 2 then
 				man, exp = val[1], val[2]
 			elseif #val == 1 then
-				local exp = math.floor(math.log10(math.abs(val)))
-				man, exp = val/math.pow(10, exp), exp
+				if val[1] == 0 then
+					man, exp = 0, 0
+				else
+					local exp1 = math.floor(math.log10(val[1]))
+					man, exp = val[1]/math.pow(10, exp1), exp1
+				end
 			end
 		end
 		if i == 1 then
@@ -1296,68 +1396,76 @@ function Bnum.clamp(val: any, min: any, max: any): BN
 		if #val == 2 then
 			vMan, vExp = val[1], val[2]
 		elseif #val == 1 then
-			local exp = math.floor(math.log10(math.abs(val)))
-			vMan, vExp = val/math.pow(10, exp), exp
+			if val[1] == 0 then
+				vMan, vExp = 0, 0
+			else
+				local exp = math.floor(math.log10(math.abs(val[1])))
+				vMan, vExp = val[1]/math.pow(10, exp), exp
+			end
 		end
 	end
 	local t = type(min)
 	if t == 'number' then
-		if val == 0 then
+		if min == 0 then
 			loMan, loExp = 0, 0
 		else
 			local exp1 = math.floor(math.log10(math.abs(val)))
 			loMan, loExp = val/math.pow(10, exp1), exp1
 		end
 	elseif t == 'string' then
-		local e = string.find(val, 'e')
+		local e = string.find(min, 'e')
 		if e then
-			loMan, loExp = tonumber(string.sub(val, 1, e-1)):: number, tonumber(string.sub(val, e+1, -1)):: number
+			loMan, loExp = tonumber(string.sub(min, 1, e-1)):: number, tonumber(string.sub(min, e+1, -1)):: number
 		else
-			local number: number = tonumber(math.abs(val)):: number
+			local number: number = tonumber(math.abs(min)):: number
 			local exp1 = math.floor(math.log10(number:: number))
 			loMan, loExp = number/math.pow(10, exp1), exp1
 		end
 	elseif t == 'table' then
-		if #val >= 3 then 
+		if #min >= 3 then 
 			warn(`Failed to convert to BN cant go over 2 numbers in a table like {'{1, 2, 3}'}`)
-			warn('AutoCorrected ', val, 'to', {val[1], val[2]},' to BN\n    ', 'which is from',Bnum.toStr({val[1], val[2]}), 'to:', {val[1], val[2]})
-			loMan, loExp = val[1], val[2]
+			warn('AutoCorrected ', min, 'to', {min[1], min[2]},' to BN\n    ', 'which is from',Bnum.toStr({min[1], min[2]}), 'to:', {min[1], min[2]})
+			loMan, loExp = min[1], min[2]
 		end
-		if #val == 2 then
-			loMan, loExp = val[1], val[2]
-		elseif #val == 1 then
-			local exp = math.floor(math.log10(math.abs(val)))
-			loMan, loExp = val/math.pow(10, exp), exp
+		if #min == 2 then
+			loMan, loExp = min[1], min[2]
+		elseif #min == 1 then
+			if min[1] == 0 then
+				loMan, loExp = 0, 0
+			else
+				local exp = math.floor(math.log10(math.abs(min[1])))
+				loMan, loExp = min[1]/math.pow(10, exp), exp
+			end
 		end
 	end
 	local ty = type(max)
 	if t == 'number' then
-		if val == 0 then
+		if max == 0 then
 			hiMan, hiExp = 0, 0
 		else
-			local exp1 = math.floor(math.log10(math.abs(val)))
-			hiMan, hiExp = val/math.pow(10, exp1), exp1
+			local exp1 = math.floor(math.log10(math.abs(max)))
+			hiMan, hiExp = max/math.pow(10, exp1), exp1
 		end
 	elseif ty == 'string' then
-		local e = string.find(val, 'e')
+		local e = string.find(max, 'e')
 		if e then
-			hiMan, hiExp = tonumber(string.sub(val, 1, e-1)):: number, tonumber(string.sub(val, e+1, -1)):: number
+			hiMan, hiExp = tonumber(string.sub(max, 1, e-1)):: number, tonumber(string.sub(max, e+1, -1)):: number
 		else
-			local number: number = tonumber(math.abs(val)):: number
+			local number: number = tonumber(math.abs(max)):: number
 			local exp1 = math.floor(math.log10(number:: number))
 			hiMan, hiExp = number/math.pow(10, exp1), exp1
 		end
 	elseif ty == 'table' then
-		if #val >= 3 then 
+		if #max >= 3 then 
 			warn(`Failed to convert to BN cant go over 2 numbers in a table like {'{1, 2, 3}'}`)
-			warn('AutoCorrected ', val, 'to', {val[1], val[2]},' to BN\n    ', 'which is from',Bnum.toStr({val[1], val[2]}), 'to:', {val[1], val[2]})
-			hiMan, hiExp = val[1], val[2]
+			warn('AutoCorrected ', max, 'to', {max[1], max[2]},' to BN\n    ', 'which is from',Bnum.toStr({max[1], max[2]}), 'to:', {max[1], max[2]})
+			hiMan, hiExp = max[1], max[2]
 		end
-		if #val == 2 then
-			hiMan, hiExp = val[1], val[2]
-		elseif #val == 1 then
-			local exp = math.floor(math.log10(math.abs(val)))
-			hiMan, hiExp = val/math.pow(10, exp), exp
+		if #max == 2 then
+			hiMan, hiExp = max[1], max[2]
+		elseif #max == 1 then
+			local exp = math.floor(math.log10(math.abs(max[1])))
+			hiMan, hiExp = max[1]/math.pow(10, exp), exp
 		end
 	end
 	if loExp > hiExp or (loExp == hiExp and loMan > hiMan) then
@@ -1404,8 +1512,12 @@ function Bnum.exp(val: any): BN
 		if #val == 2 then
 			man, exp = val[1], val[2]
 		elseif #val == 1 then
-			local exp = math.floor(math.log10(math.abs(val)))
-			man, exp = val/math.pow(10, exp), exp
+			if val[1] == 0 then
+				man, exp = 0, 0
+			else
+				local exp1 = math.floor(math.log10(math.abs(val[1])))
+				man, exp = val[1]/math.pow(10, exp1), exp1
+			end
 		end
 	end
 	if man == 0 then return {1, 0} end
@@ -1456,8 +1568,12 @@ function Bnum.lbencode(val: any): number
 		if #val == 2 then
 			man, exp = val[1], val[2]
 		elseif #val == 1 then
-			local exp = math.floor(math.log10(math.abs(val)))
-			man, exp = val/math.pow(10, exp), exp
+			if val[1] == 0 then
+				man, exp = 0, 0
+			else
+				local exp1 = math.floor(math.log10(math.abs(val[1])))
+				man, exp = val[1]/math.pow(10, exp1), exp1
+			end
 		end
 	end
 	if man == 0 then return 4e18 end
@@ -1512,8 +1628,12 @@ function Bnum.encodeData(val: any, oldData: any): number
 		if #val == 2 then
 			man, exp = val[1], val[2]
 		elseif #val == 1 then
-			local exp = math.floor(math.log10(math.abs(val)))
-			man, exp = val/math.pow(10, exp), exp
+			if val[1] == 0 then
+				man, exp = 0, 0
+			else
+				local exp1 = math.floor(math.log10(math.abs(val[1])))
+				man, exp = val[1]/math.pow(10, exp1), exp1
+			end
 		end
 	end
 	if not oldData then
@@ -1566,8 +1686,12 @@ function Bnum.floor(val: any): BN
 		if #val == 2 then
 			man, exp = val[1], val[2]
 		elseif #val == 1 then
-			local exp = math.floor(math.log10(math.abs(val)))
-			man, exp = val/math.pow(10, exp), exp
+			if val[1] == 0 then
+				man, exp = 0, 0
+			else
+				local exp1 = math.floor(math.log10(math.abs(val[1])))
+				man, exp = val[1]/math.pow(10, exp1), exp1
+			end
 		end
 	end
 	if (man == 0 and exp == math.huge) or man ~= man or exp ~= exp then
@@ -1617,8 +1741,12 @@ function Bnum.mod(val1: any, val2: any): BN
 		if #val1 == 2 then
 			man1, exp1 = val1[1], val1[2]
 		elseif #val1 == 1 then
-			local exp = math.floor(math.log10(val1))
-			man1, exp1 = val1/math.pow(10, exp), exp
+			if val1[1] == 0 then
+				man1, exp1 = 0, 0
+			else
+				local exp = math.floor(math.log10(val1[1]))
+				man1, exp1 = val1[1]/math.pow(10, exp), exp
+			end
 		end
 	end
 	local t = type(val2)
@@ -1651,8 +1779,12 @@ function Bnum.mod(val1: any, val2: any): BN
 		if #val2 == 2 then
 			man2, exp2 = val2[1], val2[2]
 		elseif #val2 == 1 then
-			local exp = math.floor(math.log10(val2))
-			man2, exp2 = val2/math.pow(10, exp), exp
+			if val2[1] == 0 then
+				man2, exp2 = 0, 0
+			else
+				local exp = math.floor(math.log10(val2[1]))
+				man2, exp2 = val1[1]/math.pow(10, exp), exp
+			end
 		end
 	end
 	if man2 == 0 then return {0, 0} end
@@ -1709,8 +1841,12 @@ function Bnum.modf(val: any): (BN, BN)
 		if #val == 2 then
 			man, exp = val[1], val[2]
 		elseif #val == 1 then
-			local exp = math.floor(math.log10(math.abs(val)))
-			man, exp = val/math.pow(10, exp), exp
+			if val[1] == 0 then
+				man, exp = 0, 0
+			else
+				local exp1 = math.floor(math.log10(math.abs(val[1])))
+				man, exp = val[1]/math.pow(10, exp1), exp1
+			end
 		end
 	end
 	if man == 0 or exp == math.huge or exp ~= exp then
@@ -1757,8 +1893,12 @@ function Bnum.fmod(val1: any, val2: any): BN
 		if #val1 == 2 then
 			man1, exp1 = val1[1], val1[2]
 		elseif #val1 == 1 then
-			local exp = math.floor(math.log10(val1))
-			man1, exp1 = val1/math.pow(10, exp), exp
+			if val1[1] == 0 then
+				man1, exp1 = 0, 0
+			else
+				local exp = math.floor(math.log10(val1[1]))
+				man1, exp1 = val1[1]/math.pow(10, exp), exp
+			end
 		end
 	end
 	local t = type(val2)
@@ -1791,8 +1931,12 @@ function Bnum.fmod(val1: any, val2: any): BN
 		if #val2 == 2 then
 			man2, exp2 = val2[1], val2[2]
 		elseif #val2 == 1 then
-			local exp = math.floor(math.log10(val2))
-			man2, exp2 = val2/math.pow(10, exp), exp
+			if val2[1] == 0 then
+				man2, exp2 = 0, 0
+			else
+				local exp = math.floor(math.log10(val2[1]))
+				man2, exp2 = val1[1]/math.pow(10, exp), exp
+			end
 		end
 	end
 	if man2 == 0 then return {0/0, 0} end
@@ -1855,8 +1999,12 @@ function Bnum.ceil(val: any): BN
 		if #val == 2 then
 			man, exp = val[1], val[2]
 		elseif #val == 1 then
-			local exp = math.floor(math.log10(math.abs(val)))
-			man, exp = val/math.pow(10, exp), exp
+			if val[1] == 0 then
+				man, exp = 0, 0
+			else
+				local exp1 = math.floor(math.log10(val[1]))
+				man, exp = val[1]/math.pow(10, exp1), exp1
+			end
 		end
 	end
 	if exp > 0 then
@@ -1870,6 +2018,19 @@ function Bnum.ceil(val: any): BN
 	local shift = -exp
 	local m = man * math.pow(10, shift)
 	return {math.ceil(m), exp - shift}
+end
+
+function Bnum.maxBuy(val1: any, val2: any, multi: any): (BN, BN)
+	local min = Bnum.sub(multi, 1)
+	local currMul = Bnum.mul(val1, min)
+	local currdiv = Bnum.div(currMul, val2)
+	local inLog = Bnum.add(currdiv, 1)
+	local totalAmount = Bnum.floor(Bnum.log(inLog, multi))
+	local multiPow = Bnum.pow(multi, totalAmount)
+	local multiPowSub = Bnum.sub(multiPow, 1)
+	local totalDiv = Bnum.div(multiPowSub, min)
+	local totalCost = Bnum.mul(totalDiv, val2)
+	return totalAmount, totalCost
 end
 
 return table.freeze(Bnum)
