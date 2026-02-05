@@ -9,7 +9,7 @@ function Bnum.fromNumber(val: number): BN
 	if val == -math.huge then return {-1, math.huge} end
 	if val == 0 then return {0, 0} end
 	exp = math.floor(math.log10(math.abs(val)))
-	man = val / math.pow(10, exp)
+	man = val / 10^exp
 	return {man, exp}
 end
 
@@ -21,7 +21,7 @@ function Bnum.toNumber(val: any): number
 			man1, exp1 = 0, 0
 		else
 			local exp = math.floor(math.log10(math.abs(val)))
-			man1, exp1 = val/math.pow(10, exp), exp
+			man1, exp1 = val/10^exp, exp
 		end
 	elseif types == 'string' then
 		local e = string.find(val, 'e')
@@ -33,7 +33,7 @@ function Bnum.toNumber(val: any): number
 				man1, exp1 = 0, 0
 			else
 				local exp = math.floor(math.log10(number:: number))
-				man1, exp1 = number/math.pow(10, exp), exp
+				man1, exp1 = number/10^exp, exp
 			end
 		end
 	elseif types == 'table' then
@@ -49,12 +49,12 @@ function Bnum.toNumber(val: any): number
 				man1, exp1 = 0, 0
 			else
 				local exp = math.floor(math.log10(math.abs(val[1])))
-				man1, exp1 = val/math.pow(10, exp), exp
+				man1, exp1 = val/10^exp, exp
 			end
 		end
 	end
 	if exp1 > 308 then return math.huge end
-	local scale = man1 * math.pow(10, exp1)
+	local scale = man1 * 10^exp1
 	scale = math.floor(scale * 100 + 0.001) / 100
 	return scale
 end
@@ -68,7 +68,7 @@ function Bnum.add(val1: any, val2: any): BN
 			man1, exp1 = 0, 0
 		else
 			local exp = math.floor(math.log10(val1))
-			man1, exp1 = val1/math.pow(10, exp), exp
+			man1, exp1 = val1/10^exp, exp
 		end
 	elseif types == 'string' then
 		local e = string.find(val1, 'e')
@@ -80,7 +80,7 @@ function Bnum.add(val1: any, val2: any): BN
 				man1, exp1 = 0, 0
 			else
 				local exp = math.floor(math.log10(number:: number))
-				man1, exp1 = number/math.pow(10, exp), exp
+				man1, exp1 = number/10^exp, exp
 			end
 		end
 	elseif types == 'table' then
@@ -96,7 +96,7 @@ function Bnum.add(val1: any, val2: any): BN
 				man1, exp1 = 0, 0
 			else
 				local exp = math.floor(math.log10(val1[1]))
-				man1, exp1 = val1[1]/math.pow(10, exp), exp
+				man1, exp1 = val1[1]/10^exp, exp
 			end
 		end
 	end
@@ -106,7 +106,7 @@ function Bnum.add(val1: any, val2: any): BN
 			man2, exp2 = 0,0
 		else
 			local exp = math.floor(math.log10(val2))
-			man2, exp2 = val2/math.pow(10, exp), exp
+			man2, exp2 = val2/10^exp, exp
 		end
 	elseif t == 'string' then
 		local e = string.find(val2, 'e')
@@ -118,7 +118,7 @@ function Bnum.add(val1: any, val2: any): BN
 				man2, exp2 = 0, 0
 			else
 				local exp = math.floor(math.log10(number:: number))
-				man2, exp2 = number/math.pow(10, exp), exp
+				man2, exp2 = number/10^exp, exp
 			end
 		end
 	elseif t == 'table' then
@@ -134,7 +134,7 @@ function Bnum.add(val1: any, val2: any): BN
 				man2, exp2 = 0, 0
 			else
 				local exp = math.floor(math.log10(val2[1]))
-				man2, exp2 = val1[1]/math.pow(10, exp), exp
+				man2, exp2 = val1[1]/10^exp, exp
 			end
 		end
 	end
@@ -143,14 +143,14 @@ function Bnum.add(val1: any, val2: any): BN
 		if diff > 15 then
 			return {man1, exp1}
 		end
-		man2 = man2 * math.pow(10, -diff)
+		man2 = man2 * (10^-diff)
 		exp2 = exp1
 	elseif exp2 > exp1 then
 		local diff = exp2 - exp1
 		if diff > 15 then
 			return {man1, exp1}
 		end
-		man1 = man1 * math.pow(10, -diff)
+		man1 = man1 * (10^-diff)
 		exp1 = exp2
 	end
 	local man = man1 + man2
@@ -158,7 +158,7 @@ function Bnum.add(val1: any, val2: any): BN
 		return {0, 0}
 	end
 	local expShift = math.floor(math.log10(math.abs(man)))
-	man = man / math.pow(10, expShift)
+	man = man / 10^expShift
 	return {man, exp1 + expShift}
 end
 
@@ -171,7 +171,7 @@ function Bnum.sub(val1: any, val2: any, shouldNotGoBelowZero: boolean?): BN
 			man1, exp1 = 0, 0
 		else
 			local exp = math.floor(math.log10(val1))
-			man1, exp1 = val1/math.pow(10, exp), exp
+			man1, exp1 = val1/10^exp, exp
 		end
 	elseif types == 'string' then
 		local e = string.find(val1, 'e')
@@ -183,7 +183,7 @@ function Bnum.sub(val1: any, val2: any, shouldNotGoBelowZero: boolean?): BN
 				man1, exp1 = 0, 0
 			else
 				local exp = math.floor(math.log10(number:: number))
-				man1, exp1 = number/math.pow(10, exp), exp
+				man1, exp1 = number/10^exp, exp
 			end
 		end
 	elseif types == 'table' then
@@ -199,7 +199,7 @@ function Bnum.sub(val1: any, val2: any, shouldNotGoBelowZero: boolean?): BN
 				man1, exp1 = 0, 0
 			else
 				local exp = math.floor(math.log10(val1[1]))
-				man1, exp1 = val1[1]/math.pow(10, exp), exp
+				man1, exp1 = val1[1]/10^exp, exp
 			end
 		end
 	end
@@ -209,7 +209,7 @@ function Bnum.sub(val1: any, val2: any, shouldNotGoBelowZero: boolean?): BN
 			man2, exp2 = 0,0
 		else
 			local exp = math.floor(math.log10(val2))
-			man2, exp2 = val2/math.pow(10, exp), exp
+			man2, exp2 = val2/10^exp, exp
 		end
 	elseif t == 'string' then
 		local e = string.find(val2, 'e')
@@ -221,7 +221,7 @@ function Bnum.sub(val1: any, val2: any, shouldNotGoBelowZero: boolean?): BN
 				man2, exp2 = 0, 0
 			else
 				local exp = math.floor(math.log10(number:: number))
-				man2, exp2 = number/math.pow(10, exp), exp
+				man2, exp2 = number/10^exp, exp
 			end
 		end
 	elseif t == 'table' then
@@ -237,7 +237,7 @@ function Bnum.sub(val1: any, val2: any, shouldNotGoBelowZero: boolean?): BN
 				man2, exp2 = 0, 0
 			else
 				local exp = math.floor(math.log10(val2[1]))
-				man2, exp2 = val1[1]/math.pow(10, exp), exp
+				man2, exp2 = val1[1]/10^exp, exp
 			end
 		end
 	end
@@ -247,14 +247,14 @@ function Bnum.sub(val1: any, val2: any, shouldNotGoBelowZero: boolean?): BN
 		if diff > 15 then
 			return val1
 		end
-		man2 = man2 * math.pow(10, -diff)
+		man2 = man2 * (10^-diff)
 		exp2 = exp1
 	elseif exp2 > exp1 then
 		local diff = exp2 - exp1
 		if diff > 15 then
 			return val1
 		end
-		man1 = man1 * math.pow(10, -diff)
+		man1 = man1 * (10^-diff)
 		exp1 = exp2
 	end
 	local man = man1 - man2
@@ -265,7 +265,7 @@ function Bnum.sub(val1: any, val2: any, shouldNotGoBelowZero: boolean?): BN
 		return {0, 0}
 	end
 	local expShift = math.floor(math.log10(math.abs(man)))
-	man = man / math.pow(10, expShift)
+	man = man / 10^expShift
 	return {man, exp1 + expShift}
 end
 
@@ -278,7 +278,7 @@ function Bnum.mul(val1: any, val2: any): BN
 			man1, exp1 = 0, 0
 		else
 			local exp = math.floor(math.log10(val1))
-			man1, exp1 = val1/math.pow(10, exp), exp
+			man1, exp1 = val1/10^exp, exp
 		end
 	elseif types == 'string' then
 		local e = string.find(val1, 'e')
@@ -290,7 +290,7 @@ function Bnum.mul(val1: any, val2: any): BN
 				man1, exp1 = 0, 0
 			else
 				local exp = math.floor(math.log10(number:: number))
-				man1, exp1 = number/math.pow(10, exp), exp
+				man1, exp1 = number/10^exp, exp
 			end
 		end
 	elseif types == 'table' then
@@ -306,7 +306,7 @@ function Bnum.mul(val1: any, val2: any): BN
 				man1, exp1 = 0, 0
 			else
 				local exp = math.floor(math.log10(val1[1]))
-				man1, exp1 = val1[1]/math.pow(10, exp), exp
+				man1, exp1 = val1[1]/10^exp, exp
 			end
 		end
 	end
@@ -316,7 +316,7 @@ function Bnum.mul(val1: any, val2: any): BN
 			man2, exp2 = 0,0
 		else
 			local exp = math.floor(math.log10(val2))
-			man2, exp2 = val2/math.pow(10, exp), exp
+			man2, exp2 = val2/10^exp, exp
 		end
 	elseif t == 'string' then
 		local e = string.find(val2, 'e')
@@ -328,7 +328,7 @@ function Bnum.mul(val1: any, val2: any): BN
 				man2, exp2 = 0, 0
 			else
 				local exp = math.floor(math.log10(number:: number))
-				man2, exp2 = number/math.pow(10, exp), exp
+				man2, exp2 = number/10^exp, exp
 			end
 		end
 	elseif t == 'table' then
@@ -344,7 +344,7 @@ function Bnum.mul(val1: any, val2: any): BN
 				man2, exp2 = 0, 0
 			else
 				local exp = math.floor(math.log10(val2[1]))
-				man2, exp2 = val1[1]/math.pow(10, exp), exp
+				man2, exp2 = val1[1]/10^exp, exp
 			end
 		end
 	end
@@ -354,7 +354,7 @@ function Bnum.mul(val1: any, val2: any): BN
 		return {0, 0}
 	end
 	local expShift = math.floor(math.log10(math.abs(man)))
-	man = man / math.pow(10, expShift)
+	man = man / 10^expShift
 	return {man, expSum + expShift}
 end
 
@@ -367,7 +367,7 @@ function Bnum.div(val1: any, val2: any): BN
 			man1, exp1 = 0, 0
 		else
 			local exp = math.floor(math.log10(val1))
-			man1, exp1 = val1/math.pow(10, exp), exp
+			man1, exp1 = val1/10^exp, exp
 		end
 	elseif types == 'string' then
 		local e = string.find(val1, 'e')
@@ -379,7 +379,7 @@ function Bnum.div(val1: any, val2: any): BN
 				man1, exp1 = 0, 0
 			else
 				local exp = math.floor(math.log10(number:: number))
-				man1, exp1 = number/math.pow(10, exp), exp
+				man1, exp1 = number/10^exp, exp
 			end
 		end
 	elseif types == 'table' then
@@ -395,7 +395,7 @@ function Bnum.div(val1: any, val2: any): BN
 				man1, exp1 = 0, 0
 			else
 				local exp = math.floor(math.log10(val1[1]))
-				man1, exp1 = val1[1]/math.pow(10, exp), exp
+				man1, exp1 = val1[1]/10^exp, exp
 			end
 		end
 	end
@@ -405,7 +405,7 @@ function Bnum.div(val1: any, val2: any): BN
 			man2, exp2 = 0,0
 		else
 			local exp = math.floor(math.log10(val2))
-			man2, exp2 = val2/math.pow(10, exp), exp
+			man2, exp2 = val2/10^exp, exp
 		end
 	elseif t == 'string' then
 		local e = string.find(val2, 'e')
@@ -417,7 +417,7 @@ function Bnum.div(val1: any, val2: any): BN
 				man2, exp2 = 0, 0
 			else
 				local exp = math.floor(math.log10(number:: number))
-				man2, exp2 = number/math.pow(10, exp), exp
+				man2, exp2 = number/10^exp, exp
 			end
 		end
 	elseif t == 'table' then
@@ -433,7 +433,7 @@ function Bnum.div(val1: any, val2: any): BN
 				man2, exp2 = 0, 0
 			else
 				local exp = math.floor(math.log10(val2[1]))
-				man2, exp2 = val1[1]/math.pow(10, exp), exp
+				man2, exp2 = val1[1]/10^exp, exp
 			end
 		end
 	end
@@ -443,14 +443,14 @@ function Bnum.div(val1: any, val2: any): BN
 		return {0, 0}
 	end
 	local expShift = math.floor(math.log10(math.abs(man)))
-	man = man / math.pow(10, expShift)
+	man = man / 10^expShift
 	return {man, expSum + expShift}
 end
 
 function Bnum.toStr(val: BN): string
 	if val[2] >= 308 then
 		local Eexp = math.floor(math.log10(val[2]))
-		return val[1] .. 'e' .. val[2]/math.pow(10, Eexp) .. 'e' .. Eexp
+		return val[1] .. 'e' .. val[2]/10^Eexp .. 'e' .. Eexp
 	end
 	return val[1] .. 'e' .. val[2]
 end
@@ -463,7 +463,7 @@ function Bnum.neg(val: any): BN
 			man1, exp1 = 0, 0
 		else
 			local exp = math.floor(math.log10(math.abs(val)))
-			man1, exp1 = val/math.pow(10, exp), exp
+			man1, exp1 = val/10^exp, exp
 		end
 	elseif types == 'string' then
 		local e = string.find(val, 'e')
@@ -475,7 +475,7 @@ function Bnum.neg(val: any): BN
 				man1, exp1 = 0, 0
 			else
 				local exp = math.floor(math.log10(number:: number))
-				man1, exp1 = number/math.pow(10, exp), exp
+				man1, exp1 = number/10^exp, exp
 			end
 		end
 	elseif types == 'table' then
@@ -491,7 +491,7 @@ function Bnum.neg(val: any): BN
 				man1, exp1 = 0, 0
 			else
 				local exp = math.floor(math.log10(math.abs(val[1])))
-				man1, exp1 = val/math.pow(10, exp), exp
+				man1, exp1 = val/10^exp, exp
 			end
 		end
 	end
@@ -508,7 +508,7 @@ function Bnum.pow(val1: any, val2: any): BN
 			man1, exp1 = 0, 0
 		else
 			local exp = math.floor(math.log10(val1))
-			man1, exp1 = val1/math.pow(10, exp), exp
+			man1, exp1 = val1/10^exp, exp
 		end
 	elseif types == 'string' then
 		local e = string.find(val1, 'e')
@@ -520,7 +520,7 @@ function Bnum.pow(val1: any, val2: any): BN
 				man1, exp1 = 0, 0
 			else
 				local exp = math.floor(math.log10(number:: number))
-				man1, exp1 = number/math.pow(10, exp), exp
+				man1, exp1 = number/10^exp, exp
 			end
 		end
 	elseif types == 'table' then
@@ -536,7 +536,7 @@ function Bnum.pow(val1: any, val2: any): BN
 				man1, exp1 = 0, 0
 			else
 				local exp = math.floor(math.log10(val1[1]))
-				man1, exp1 = val1[1]/math.pow(10, exp), exp
+				man1, exp1 = val1[1]/10^exp, exp
 			end
 		end
 	end
@@ -546,7 +546,7 @@ function Bnum.pow(val1: any, val2: any): BN
 			man2, exp2 = 0,0
 		else
 			local exp = math.floor(math.log10(val2))
-			man2, exp2 = val2/math.pow(10, exp), exp
+			man2, exp2 = val2/10^exp, exp
 		end
 	elseif t == 'string' then
 		local e = string.find(val2, 'e')
@@ -558,7 +558,7 @@ function Bnum.pow(val1: any, val2: any): BN
 				man2, exp2 = 0, 0
 			else
 				local exp = math.floor(math.log10(number:: number))
-				man2, exp2 = number/math.pow(10, exp), exp
+				man2, exp2 = number/10^exp, exp
 			end
 		end
 	elseif t == 'table' then
@@ -574,11 +574,11 @@ function Bnum.pow(val1: any, val2: any): BN
 				man2, exp2 = 0, 0
 			else
 				local exp = math.floor(math.log10(val2[1]))
-				man2, exp2 = val1[1]/math.pow(10, exp), exp
+				man2, exp2 = val1[1]/10^exp, exp
 			end
 		end
 	end
-	local p = man2 * math.pow(10, exp2)
+	local p = man2 * 10^exp2
 	if p == 0 then return {1, 0} end
 	if man1 == 0 then return {0, 0} end
 	if man1 < 0 then
@@ -590,13 +590,13 @@ function Bnum.pow(val1: any, val2: any): BN
 		local l = (math.log10(man1) + exp1) * p
 		if l == math.huge then return {sign, math.huge} end
 		local E = math.floor(l)
-		return {sign * math.pow(10, l-E), E}
+		return {sign * 10^(l-E), E}
 	end
 	local l = (math.log10(man1) + exp1) * p
 	if l == math.huge then return {1, math.huge} end
 	if l == -math.huge then return {0, -math.huge} end
 	local E = math.floor(l)
-	return {math.pow(10,l-E), E}
+	return {10^(l-E), E}
 end
 
 function Bnum.pow10(val: any): BN
@@ -607,7 +607,7 @@ function Bnum.pow10(val: any): BN
 			man1, exp1 = 0, 0
 		else
 			local exp = math.floor(math.log10(math.abs(val)))
-			man1, exp1 = val/math.pow(10, exp), exp
+			man1, exp1 = val/10^exp, exp
 		end
 	elseif types == 'string' then
 		local e = string.find(val, 'e')
@@ -619,7 +619,7 @@ function Bnum.pow10(val: any): BN
 				man1, exp1 = 0, 0
 			else
 				local exp = math.floor(math.log10(number:: number))
-				man1, exp1 = number/math.pow(10, exp), exp
+				man1, exp1 = number/10^exp, exp
 			end
 		end
 	elseif types == 'table' then
@@ -635,15 +635,15 @@ function Bnum.pow10(val: any): BN
 				man1, exp1 = 0, 0
 			else
 				local exp = math.floor(math.log10(val[1]))
-				man1, exp1 = val[1]/math.pow(10, exp), exp
+				man1, exp1 = val[1]/10^exp, exp
 			end
 		end
 	end
-	local exp = man1*math.pow(10, exp1)
+	local exp = man1*10^exp1
 	local frac = exp%1
 	local man = 1
 	if frac ~= 0 then
-		man*= math.pow(10, frac)
+		man*= 10^frac
 		exp -= frac
 	end
 	return {man, exp}
@@ -657,7 +657,7 @@ function Bnum.sqrt(val: any): BN
 			man1, exp1 = 0, 0
 		else
 			local exp = math.floor(math.log10(math.abs(val)))
-			man1, exp1 = val/math.pow(10, exp), exp
+			man1, exp1 = val/10^exp, exp
 		end
 	elseif types == 'string' then
 		local e = string.find(val, 'e')
@@ -669,7 +669,7 @@ function Bnum.sqrt(val: any): BN
 				man1, exp1 = 0, 0
 			else
 				local exp = math.floor(math.log10(number:: number))
-				man1, exp1 = number/math.pow(10, exp), exp
+				man1, exp1 = number/10^exp, exp
 			end
 		end
 	elseif types == 'table' then
@@ -685,7 +685,7 @@ function Bnum.sqrt(val: any): BN
 				man1, exp1 = 0, 0
 			else
 				local exp = math.floor(math.log10(val[1]))
-				man1, exp1 = val[1]/math.pow(10, exp), exp
+				man1, exp1 = val[1]/10^exp, exp
 			end
 		end
 	end
@@ -693,7 +693,7 @@ function Bnum.sqrt(val: any): BN
 	man1 = math.sqrt(man1)
 	exp1 /= 2
 	local exp = math.floor(math.log10(man1))
-	return {man1/math.pow(10, exp), exp}
+	return {man1/10^exp, exp}
 end
 
 function Bnum.cbrt(val: any): BN
@@ -704,7 +704,7 @@ function Bnum.cbrt(val: any): BN
 			man1, exp1 = 0, 0
 		else
 			local exp = math.floor(math.log10(math.abs(val)))
-			man1, exp1 = val/math.pow(10, exp), exp
+			man1, exp1 = val/10^exp, exp
 		end
 	elseif types == 'string' then
 		local e = string.find(val, 'e')
@@ -716,7 +716,7 @@ function Bnum.cbrt(val: any): BN
 				man1, exp1 =0, 0
 			else
 				local exp = math.floor(math.log10(number:: number))
-				man1, exp1 = number/math.pow(10, exp), exp
+				man1, exp1 = number/10^exp, exp
 			end
 		end
 	elseif types == 'table' then
@@ -732,7 +732,7 @@ function Bnum.cbrt(val: any): BN
 				man1, exp1 = 0, 0
 			else
 				local exp = math.floor(math.log10(val[1]))
-				man1, exp1 = val[1]/math.pow(10, exp), exp
+				man1, exp1 = val[1]/10^exp, exp
 			end
 		end
 	end
@@ -740,7 +740,7 @@ function Bnum.cbrt(val: any): BN
 	man1 ^= (1/3)
 	exp1 /= 3
 	local exp = math.floor(math.log10(man1))
-	man1/= math.pow(10, exp)
+	man1/= 10^exp
 	exp1 += exp
 	return {man1, exp1}
 end
@@ -753,7 +753,7 @@ function Bnum.logn(val: any): BN
 			man, exp = 0, 0
 		else
 			local exp1 = math.floor(math.log10(math.abs(val)))
-			man, exp = val/math.pow(10, exp1), exp1
+			man, exp = val/10^exp1, exp1
 		end
 	elseif types == 'string' then
 		local e = string.find(val, 'e')
@@ -765,7 +765,7 @@ function Bnum.logn(val: any): BN
 				man, exp =0, 0
 			else
 				local exp1 = math.floor(math.log10(number:: number))
-				man, exp = number/math.pow(10, exp1), exp1
+				man, exp = number/10^exp1, exp1
 			end
 		end
 	elseif types == 'table' then
@@ -781,14 +781,14 @@ function Bnum.logn(val: any): BN
 				man, exp = 0, 0
 			else
 				local exp1 = math.floor(math.log10(val[1]))
-				man, exp = val[1]/math.pow(10, exp1), exp1
+				man, exp = val[1]/10^exp1, exp1
 			end
 		end
 	end
 	if man <= 0 then return {0/0, 0} end
 	local logN = math.log(man) + exp * 2.302585092994046
 	local exp = math.floor(math.log10(logN))
-	man, exp = logN/math.pow(10, exp), exp
+	man, exp = logN/10^exp, exp
 	return {man, exp}
 end
 
@@ -800,7 +800,7 @@ function Bnum.log10(val: any): BN
 			man, exp = 0, 0
 		else
 			local exp1 = math.floor(math.log10(math.abs(val)))
-			man, exp = val/math.pow(10, exp1), exp1
+			man, exp = val/10^exp1, exp1
 		end
 	elseif types == 'string' then
 		local e = string.find(val, 'e')
@@ -812,7 +812,7 @@ function Bnum.log10(val: any): BN
 				man, exp =0, 0
 			else
 				local exp1 = math.floor(math.log10(number:: number))
-				man, exp = number/math.pow(10, exp1), exp1
+				man, exp = number/10^exp1, exp1
 			end
 		end
 	elseif types == 'table' then
@@ -828,7 +828,7 @@ function Bnum.log10(val: any): BN
 				man, exp = 0, 0
 			else
 				local exp1 = math.floor(math.log10(val[1]))
-				man, exp = val[1]/math.pow(10, exp1), exp1
+				man, exp = val[1]/10^exp1, exp1
 			end
 		end
 	end
@@ -836,11 +836,11 @@ function Bnum.log10(val: any): BN
 	local logVal = math.log10(man) + exp
 	if math.abs(logVal) < 10 then
 		local exp = math.floor(math.log10(logVal))
-		man, exp = logVal/math.pow(10, exp), exp
+		man, exp = logVal/10^exp, exp
 		return {man, exp}
 	end
 	local expShift = math.floor(math.log10(math.abs(logVal)))
-	logVal = logVal / math.pow(10, expShift)
+	logVal = logVal / 10^expShift
 	return {logVal, exp + expShift}
 end
 
@@ -858,7 +858,7 @@ function Bnum.root(val1: any, val2: any): BN
 			man1, exp1 = 0, 0
 		else
 			local exp = math.floor(math.log10(val1))
-			man1, exp1 = val1/math.pow(10, exp), exp
+			man1, exp1 = val1/10^exp, exp
 		end
 	elseif types == 'string' then
 		local e = string.find(val1, 'e')
@@ -870,7 +870,7 @@ function Bnum.root(val1: any, val2: any): BN
 				man1, exp1 = 0, 0
 			else
 				local exp = math.floor(math.log10(number:: number))
-				man1, exp1 = number/math.pow(10, exp), exp
+				man1, exp1 = number/10^exp, exp
 			end
 		end
 	elseif types == 'table' then
@@ -886,7 +886,7 @@ function Bnum.root(val1: any, val2: any): BN
 				man1, exp1 = 0, 0
 			else
 				local exp = math.floor(math.log10(val1[1]))
-				man1, exp1 = val1[1]/math.pow(10, exp), exp
+				man1, exp1 = val1[1]/10^exp, exp
 			end
 		end
 	end
@@ -896,7 +896,7 @@ function Bnum.root(val1: any, val2: any): BN
 			man2, exp2 = 0,0
 		else
 			local exp = math.floor(math.log10(val2))
-			man2, exp2 = val2/math.pow(10, exp), exp
+			man2, exp2 = val2/10^exp, exp
 		end
 	elseif t == 'string' then
 		local e = string.find(val2, 'e')
@@ -908,7 +908,7 @@ function Bnum.root(val1: any, val2: any): BN
 				man2, exp2 = 0, 0
 			else
 				local exp = math.floor(math.log10(number:: number))
-				man2, exp2 = number/math.pow(10, exp), exp
+				man2, exp2 = number/10^exp, exp
 			end
 		end
 	elseif t == 'table' then
@@ -924,7 +924,7 @@ function Bnum.root(val1: any, val2: any): BN
 				man2, exp2 = 0, 0
 			else
 				local exp = math.floor(math.log10(val2[1]))
-				man2, exp2 = val1[1]/math.pow(10, exp), exp
+				man2, exp2 = val1[1]/10^exp, exp
 			end
 		end
 	end
@@ -932,10 +932,10 @@ function Bnum.root(val1: any, val2: any): BN
 		if man2 %2 == 0 and exp2 == 0 then return {0/0, 0} end
 	end
 	local l = math.log10(man1) + exp1
-	local div = man2*math.pow(10, exp2)
+	local div = man2*(10^exp2)
 	local res = l / div
 	local newE = math.floor(res)
-	local newM = math.pow(10, res-newE)
+	local newM = 10^(res-newE)
 	return {newM, newE}
 end
 
@@ -948,7 +948,7 @@ function Bnum.compare(val1: any, val2: any): number
 			man1, exp1 = 0, 0
 		else
 			local exp = math.floor(math.log10(val1))
-			man1, exp1 = val1/math.pow(10, exp), exp
+			man1, exp1 = val1/10^exp, exp
 		end
 	elseif types == 'string' then
 		local e = string.find(val1, 'e')
@@ -960,7 +960,7 @@ function Bnum.compare(val1: any, val2: any): number
 				man1, exp1 = 0, 0
 			else
 				local exp = math.floor(math.log10(number:: number))
-				man1, exp1 = number/math.pow(10, exp), exp
+				man1, exp1 = number/10^exp, exp
 			end
 		end
 	elseif types == 'table' then
@@ -976,7 +976,7 @@ function Bnum.compare(val1: any, val2: any): number
 				man1, exp1 = 0, 0
 			else
 				local exp = math.floor(math.log10(val1[1]))
-				man1, exp1 = val1[1]/math.pow(10, exp), exp
+				man1, exp1 = val1[1]/10^exp, exp
 			end
 		end
 	end
@@ -986,7 +986,7 @@ function Bnum.compare(val1: any, val2: any): number
 			man2, exp2 = 0,0
 		else
 			local exp = math.floor(math.log10(val2))
-			man2, exp2 = val2/math.pow(10, exp), exp
+			man2, exp2 = val2/10^exp, exp
 		end
 	elseif t == 'string' then
 		local e = string.find(val2, 'e')
@@ -998,7 +998,7 @@ function Bnum.compare(val1: any, val2: any): number
 				man2, exp2 = 0, 0
 			else
 				local exp = math.floor(math.log10(number:: number))
-				man2, exp2 = number/math.pow(10, exp), exp
+				man2, exp2 = number/10^exp, exp
 			end
 		end
 	elseif t == 'table' then
@@ -1014,7 +1014,7 @@ function Bnum.compare(val1: any, val2: any): number
 				man2, exp2 = 0, 0
 			else
 				local exp = math.floor(math.log10(val2[1]))
-				man2, exp2 = val1[1]/math.pow(10, exp), exp
+				man2, exp2 = val1[1]/10^exp, exp
 			end
 		end
 	end
@@ -1070,7 +1070,7 @@ function Bnum.HyperRootLog(val: any): BN
 			man1, exp1 = 0, 0
 		else
 			local exp = math.floor(math.log10(math.abs(val)))
-			man1, exp1 = val/math.pow(10, exp), exp
+			man1, exp1 = val/10^exp, exp
 		end
 	elseif types == 'string' then
 		local e = string.find(val, 'e')
@@ -1082,7 +1082,7 @@ function Bnum.HyperRootLog(val: any): BN
 				man1, exp1 =0, 0
 			else
 				local exp = math.floor(math.log10(number:: number))
-				man1, exp1 = number/math.pow(10, exp), exp
+				man1, exp1 = number/10^exp, exp
 			end
 		end
 	elseif types == 'table' then
@@ -1095,13 +1095,13 @@ function Bnum.HyperRootLog(val: any): BN
 			man1, exp1 = val[1], val[2]
 		elseif #val == 1 then
 			local exp = math.floor(math.log10(math.abs(val)))
-			man1, exp1 = val/math.pow(10, exp), exp
+			man1, exp1 = val/10^exp, exp
 		end
 	end
 	local x = math.log10(man1) + exp1
 	local y = math.sqrt(x)
 	local newE = math.floor(math.log10(y))
-	local newM = y / math.pow(10, newE)
+	local newM = y / 10^newE
 	return {newM, newE}
 end
 
@@ -1113,7 +1113,7 @@ function Bnum.abs(val: any): BN
 			man1, exp1 = 0, 0
 		else
 			local exp = math.floor(math.log10(math.abs(val)))
-			man1, exp1 = val/math.pow(10, exp), exp
+			man1, exp1 = val/10^exp, exp
 		end
 	elseif types == 'string' then
 		local e = string.find(val, 'e')
@@ -1125,7 +1125,7 @@ function Bnum.abs(val: any): BN
 				man1, exp1 =0, 0
 			else
 				local exp = math.floor(math.log10(number:: number))
-				man1, exp1 = number/math.pow(10, exp), exp
+				man1, exp1 = number/10^exp, exp
 			end
 		end
 	elseif types == 'table' then
@@ -1141,7 +1141,7 @@ function Bnum.abs(val: any): BN
 				man1, exp1 = 0, 0
 			else
 				local exp = math.floor(math.log10(val[1]))
-				man1, exp1 = val[1]/math.pow(10, exp), exp
+				man1, exp1 = val[1]/10^exp, exp
 			end
 		end
 	end
@@ -1162,7 +1162,7 @@ function Bnum.format(val: any,digits: number?,hyperAt: number?): string
 			man, exp = 0, 0
 		else
 			local exp1 = math.floor(math.log10(math.abs(val)))
-			man, exp = val/math.pow(10, exp1), exp1
+			man, exp = val/10^exp1, exp1
 		end
 	elseif types == 'string' then
 		local e = string.find(val, 'e')
@@ -1174,7 +1174,7 @@ function Bnum.format(val: any,digits: number?,hyperAt: number?): string
 				man, exp = 0, 0
 			else
 				local exp1 = math.floor(math.log10(number:: number))
-				man, exp = number/math.pow(10, exp1), exp1
+				man, exp = number/10^exp1, exp1
 			end
 		end
 	elseif types == 'table' then
@@ -1190,7 +1190,7 @@ function Bnum.format(val: any,digits: number?,hyperAt: number?): string
 				man, exp = 0, 0
 			else
 				local exp1 = math.floor(math.log10(val[1]))
-				man, exp1 = val[1]/math.pow(10, exp1), exp1
+				man, exp1 = val[1]/10^exp1, exp1
 			end
 		end
 	end
@@ -1208,8 +1208,8 @@ function Bnum.format(val: any,digits: number?,hyperAt: number?): string
 		return m .. "e" .. exp
 	end
 	if exp >= 3 and exp < 6 then
-		man *= math.pow(10, exp)
-		man = math.floor(man * math.pow(10, digits) + 0.001) / math.pow(10, digits)
+		man *= 10^exp
+		man = math.floor(man * 10^digits + 0.001) / 10^digits
 		local str = tostring(man)
 		local formatted = str:reverse():gsub("(%d%d%d)", "%1,"):reverse()
 		formatted = formatted:gsub("^,", "")
@@ -1218,8 +1218,8 @@ function Bnum.format(val: any,digits: number?,hyperAt: number?): string
 	if exp >= 6 then
 		local index = math.floor(exp / 3)
 		local rem = exp % 3
-		local scaled = man * math.pow(10, rem)
-		local round = math.pow(10, digits)
+		local scaled = man * 10^rem
+		local round = 10^digits
 		scaled = math.floor(scaled * round + 0.001) / round
 		if index <= 3 then
 			return scaled .. first[index + 1]
@@ -1233,8 +1233,8 @@ function Bnum.format(val: any,digits: number?,hyperAt: number?): string
 	if exp < -1 then
 		local index = math.floor(-exp / 3)
 		local rem = -exp % 3
-		local scaled = man * math.pow(10, rem)
-		local round = math.pow(10, digits)
+		local scaled = man * 10^rem
+		local round = 10^digits
 		scaled = math.floor(scaled * round + 0.001) / round
 		if index <= 3 then
 			return 1 .. '/' .. scaled .. first[index + 1]
@@ -1245,7 +1245,7 @@ function Bnum.format(val: any,digits: number?,hyperAt: number?): string
 		local c = (i // 100) % 10
 		return '1/' .. scaled .. firstset[a+1] .. second[b+1] .. third[c+1]
 	end
-	local scale = man * math.pow(10, exp)
+	local scale = man * 10^exp
 	scale = math.floor(scale * 100 + 0.001) / 100
 	return tostring(scale)
 end
@@ -1265,7 +1265,7 @@ function Bnum.min<T...>(...: T...): BN
 				man, exp = 0, 0
 			else
 				local exp1 = math.floor(math.log10(math.abs(val)))
-				man, exp = val/math.pow(10, exp1), exp1
+				man, exp = val/10^exp1, exp1
 			end
 		elseif types == 'string' then
 			local e = string.find(val, 'e')
@@ -1277,7 +1277,7 @@ function Bnum.min<T...>(...: T...): BN
 					man, exp = 0, 0
 				else
 					local exp1 = math.floor(math.log10(number:: number))
-					man, exp = number/math.pow(10, exp1), exp1
+					man, exp = number/10^exp1, exp1
 				end
 			end
 		elseif types == 'table' then
@@ -1293,7 +1293,7 @@ function Bnum.min<T...>(...: T...): BN
 					man, exp = 0, 0
 				else
 					local exp1 = math.floor(math.log10(val[1]))
-					man, exp = val[1]/math.pow(10, exp1), exp1
+					man, exp = val[1]/10^exp1, exp1
 				end
 			end
 		end
@@ -1323,7 +1323,7 @@ function Bnum.max<T...>(...: T...): BN
 				man, exp = 0, 0
 			else
 				local exp1 = math.floor(math.log10(math.abs(val)))
-				man, exp = val/math.pow(10, exp1), exp1
+				man, exp = val/10^exp1, exp1
 			end
 		elseif types == 'string' then
 			local e = string.find(val, 'e')
@@ -1335,7 +1335,7 @@ function Bnum.max<T...>(...: T...): BN
 					man, exp = 0, 0
 				else
 					local exp1 = math.floor(math.log10(number:: number))
-					man, exp = number/math.pow(10, exp1), exp1
+					man, exp = number/10^exp1, exp1
 				end
 			end
 		elseif types == 'table' then
@@ -1351,7 +1351,7 @@ function Bnum.max<T...>(...: T...): BN
 					man, exp = 0, 0
 				else
 					local exp1 = math.floor(math.log10(val[1]))
-					man, exp = val[1]/math.pow(10, exp1), exp1
+					man, exp = val[1]/10^exp1, exp1
 				end
 			end
 		end
@@ -1376,7 +1376,7 @@ function Bnum.clamp(val: any, min: any, max: any): BN
 			vMan, vExp = 0, 0
 		else
 			local exp1 = math.floor(math.log10(math.abs(val)))
-			vMan, vExp = val/math.pow(10, exp1), exp1
+			vMan, vExp = val/10^exp1, exp1
 		end
 	elseif types == 'string' then
 		local e = string.find(val, 'e')
@@ -1385,7 +1385,7 @@ function Bnum.clamp(val: any, min: any, max: any): BN
 		else
 			local number: number = tonumber(math.abs(val)):: number
 			local exp1 = math.floor(math.log10(number:: number))
-			vMan, vExp = number/math.pow(10, exp1), exp1
+			vMan, vExp = number/10^exp1, exp1
 		end
 	elseif types == 'table' then
 		if #val >= 3 then 
@@ -1400,7 +1400,7 @@ function Bnum.clamp(val: any, min: any, max: any): BN
 				vMan, vExp = 0, 0
 			else
 				local exp = math.floor(math.log10(math.abs(val[1])))
-				vMan, vExp = val[1]/math.pow(10, exp), exp
+				vMan, vExp = val[1]/10^exp, exp
 			end
 		end
 	end
@@ -1410,7 +1410,7 @@ function Bnum.clamp(val: any, min: any, max: any): BN
 			loMan, loExp = 0, 0
 		else
 			local exp1 = math.floor(math.log10(math.abs(val)))
-			loMan, loExp = val/math.pow(10, exp1), exp1
+			loMan, loExp = val/10^exp1, exp1
 		end
 	elseif t == 'string' then
 		local e = string.find(min, 'e')
@@ -1419,7 +1419,7 @@ function Bnum.clamp(val: any, min: any, max: any): BN
 		else
 			local number: number = tonumber(math.abs(min)):: number
 			local exp1 = math.floor(math.log10(number:: number))
-			loMan, loExp = number/math.pow(10, exp1), exp1
+			loMan, loExp = number/10^exp1, exp1
 		end
 	elseif t == 'table' then
 		if #min >= 3 then 
@@ -1434,7 +1434,7 @@ function Bnum.clamp(val: any, min: any, max: any): BN
 				loMan, loExp = 0, 0
 			else
 				local exp = math.floor(math.log10(math.abs(min[1])))
-				loMan, loExp = min[1]/math.pow(10, exp), exp
+				loMan, loExp = min[1]/10^exp, exp
 			end
 		end
 	end
@@ -1444,7 +1444,7 @@ function Bnum.clamp(val: any, min: any, max: any): BN
 			hiMan, hiExp = 0, 0
 		else
 			local exp1 = math.floor(math.log10(math.abs(max)))
-			hiMan, hiExp = max/math.pow(10, exp1), exp1
+			hiMan, hiExp = max/10^exp1, exp1
 		end
 	elseif ty == 'string' then
 		local e = string.find(max, 'e')
@@ -1453,7 +1453,7 @@ function Bnum.clamp(val: any, min: any, max: any): BN
 		else
 			local number: number = tonumber(math.abs(max)):: number
 			local exp1 = math.floor(math.log10(number:: number))
-			hiMan, hiExp = number/math.pow(10, exp1), exp1
+			hiMan, hiExp = number/10^exp1, exp1
 		end
 	elseif ty == 'table' then
 		if #max >= 3 then 
@@ -1465,7 +1465,7 @@ function Bnum.clamp(val: any, min: any, max: any): BN
 			hiMan, hiExp = max[1], max[2]
 		elseif #max == 1 then
 			local exp = math.floor(math.log10(math.abs(max[1])))
-			hiMan, hiExp = max[1]/math.pow(10, exp), exp
+			hiMan, hiExp = max[1]/10^exp, exp
 		end
 	end
 	if loExp > hiExp or (loExp == hiExp and loMan > hiMan) then
@@ -1488,7 +1488,7 @@ function Bnum.exp(val: any): BN
 			man, exp = 0, 0
 		else
 			local exp1 = math.floor(math.log10(math.abs(val)))
-			man, exp = val/math.pow(10, exp1), exp1
+			man, exp = val/10^exp1, exp1
 		end
 	elseif types == 'string' then
 		local e = string.find(val, 'e')
@@ -1500,7 +1500,7 @@ function Bnum.exp(val: any): BN
 				man, exp = 0, 0
 			else
 				local exp1 = math.floor(math.log10(number:: number))
-				man, exp = number/math.pow(10, exp1), exp1
+				man, exp = number/10^exp1, exp1
 			end
 		end
 	elseif types == 'table' then
@@ -1516,16 +1516,16 @@ function Bnum.exp(val: any): BN
 				man, exp = 0, 0
 			else
 				local exp1 = math.floor(math.log10(math.abs(val[1])))
-				man, exp = val[1]/math.pow(10, exp1), exp1
+				man, exp = val[1]/10^exp1, exp1
 			end
 		end
 	end
 	if man == 0 then return {1, 0} end
 	if exp == math.huge then return {1, math.huge} end
 	if exp ~= exp then return {0/0, 0} end
-	local pow = (man*math.pow(10, exp)) * 0.4342944819032518
+	local pow = (man*10^exp) * 0.4342944819032518
 	local e = math.floor(pow)
-	return {math.pow(10, pow-e), exp+e}
+	return {10^(pow-e), exp+e}
 end
 
 function Bnum.random(val1: any?, val2: any?): BN
@@ -1544,7 +1544,7 @@ function Bnum.lbencode(val: any): number
 			man, exp = 0, 0
 		else
 			local exp1 = math.floor(math.log10(math.abs(val)))
-			man, exp = val/math.pow(10, exp1), exp1
+			man, exp = val/10^exp1, exp1
 		end
 	elseif types == 'string' then
 		local e = string.find(val, 'e')
@@ -1556,7 +1556,7 @@ function Bnum.lbencode(val: any): number
 				man, exp = 0, 0
 			else
 				local exp1 = math.floor(math.log10(number:: number))
-				man, exp = number/math.pow(10, exp1), exp1
+				man, exp = number/10^exp1, exp1
 			end
 		end
 	elseif types == 'table' then
@@ -1572,7 +1572,7 @@ function Bnum.lbencode(val: any): number
 				man, exp = 0, 0
 			else
 				local exp1 = math.floor(math.log10(math.abs(val[1])))
-				man, exp = val[1]/math.pow(10, exp1), exp1
+				man, exp = val[1]/10^exp1, exp1
 			end
 		end
 	end
@@ -1592,8 +1592,8 @@ function Bnum.lbdecode(val: number): BN
 	val = math.abs(val)
 	local expPart = math.floor(val/1e6)
 	local manPart = val % 1e6
-	local exp = math.floor((math.pow(10, expPart/1e6)-1)+0.001)
-	return {math.pow(10, manPart/1e6)*sign, exp}
+	local exp = math.floor((10^(expPart/1e6)-1)+0.001)
+	return {10^(manPart/1e6)*sign, exp}
 end
 
 function Bnum.encodeData(val: any, oldData: any): number
@@ -1604,7 +1604,7 @@ function Bnum.encodeData(val: any, oldData: any): number
 			man, exp = 0, 0
 		else
 			local exp1 = math.floor(math.log10(math.abs(val)))
-			man, exp = val/math.pow(10, exp1), exp1
+			man, exp = val/10^exp1, exp1
 		end
 	elseif types == 'string' then
 		local e = string.find(val, 'e')
@@ -1616,7 +1616,7 @@ function Bnum.encodeData(val: any, oldData: any): number
 				man, exp = 0, 0
 			else
 				local exp1 = math.floor(math.log10(number:: number))
-				man, exp = number/math.pow(10, exp1), exp1
+				man, exp = number/10^exp1, exp1
 			end
 		end
 	elseif types == 'table' then
@@ -1632,7 +1632,7 @@ function Bnum.encodeData(val: any, oldData: any): number
 				man, exp = 0, 0
 			else
 				local exp1 = math.floor(math.log10(math.abs(val[1])))
-				man, exp = val[1]/math.pow(10, exp1), exp1
+				man, exp = val[1]/10^exp1, exp1
 			end
 		end
 	end
@@ -1662,7 +1662,7 @@ function Bnum.floor(val: any): BN
 			man, exp = 0, 0
 		else
 			local exp1 = math.floor(math.log10(math.abs(val)))
-			man, exp = val/math.pow(10, exp1), exp1
+			man, exp = val/10^exp1, exp1
 		end
 	elseif types == 'string' then
 		local e = string.find(val, 'e')
@@ -1674,7 +1674,7 @@ function Bnum.floor(val: any): BN
 				man, exp = 0, 0
 			else
 				local exp1 = math.floor(math.log10(number:: number))
-				man, exp = number/math.pow(10, exp1), exp1
+				man, exp = number/10^exp1, exp1
 			end
 		end
 	elseif types == 'table' then
@@ -1690,7 +1690,7 @@ function Bnum.floor(val: any): BN
 				man, exp = 0, 0
 			else
 				local exp1 = math.floor(math.log10(math.abs(val[1])))
-				man, exp = val[1]/math.pow(10, exp1), exp1
+				man, exp = val[1]/10^exp1, exp1
 			end
 		end
 	end
@@ -1702,10 +1702,10 @@ function Bnum.floor(val: any): BN
 		if man == 0 then return {0, 0} end
 		return {man, exp}
 	end
-	local f = math.floor(man * math.pow(10, exp))
+	local f = math.floor(man * 10^exp)
 	if f == 0 then return {0, 0} end
 	local newE = math.floor(math.log10(math.abs(f)))
-	return {f / math.pow(10, newE), newE}
+	return {f / 10^newE, newE}
 end
 
 function Bnum.mod(val1: any, val2: any): BN
@@ -1717,7 +1717,7 @@ function Bnum.mod(val1: any, val2: any): BN
 			man1, exp1 = 0, 0
 		else
 			local exp = math.floor(math.log10(val1))
-			man1, exp1 = val1/math.pow(10, exp), exp
+			man1, exp1 = val1/10^exp, exp
 		end
 	elseif types == 'string' then
 		local e = string.find(val1, 'e')
@@ -1729,7 +1729,7 @@ function Bnum.mod(val1: any, val2: any): BN
 				man1, exp1 = 0, 0
 			else
 				local exp = math.floor(math.log10(number:: number))
-				man1, exp1 = number/math.pow(10, exp), exp
+				man1, exp1 = number/10^exp, exp
 			end
 		end
 	elseif types == 'table' then
@@ -1745,7 +1745,7 @@ function Bnum.mod(val1: any, val2: any): BN
 				man1, exp1 = 0, 0
 			else
 				local exp = math.floor(math.log10(val1[1]))
-				man1, exp1 = val1[1]/math.pow(10, exp), exp
+				man1, exp1 = val1[1]/10^exp, exp
 			end
 		end
 	end
@@ -1755,7 +1755,7 @@ function Bnum.mod(val1: any, val2: any): BN
 			man2, exp2 = 0,0
 		else
 			local exp = math.floor(math.log10(val2))
-			man2, exp2 = val2/math.pow(10, exp), exp
+			man2, exp2 = val2/10^exp, exp
 		end
 	elseif t == 'string' then
 		local e = string.find(val2, 'e')
@@ -1767,7 +1767,7 @@ function Bnum.mod(val1: any, val2: any): BN
 				man2, exp2 = 0, 0
 			else
 				local exp = math.floor(math.log10(number:: number))
-				man2, exp2 = number/math.pow(10, exp), exp
+				man2, exp2 = number/10^exp, exp
 			end
 		end
 	elseif t == 'table' then
@@ -1783,7 +1783,7 @@ function Bnum.mod(val1: any, val2: any): BN
 				man2, exp2 = 0, 0
 			else
 				local exp = math.floor(math.log10(val2[1]))
-				man2, exp2 = val1[1]/math.pow(10, exp), exp
+				man2, exp2 = val1[1]/10^exp, exp
 			end
 		end
 	end
@@ -1803,10 +1803,10 @@ function Bnum.mod(val1: any, val2: any): BN
 	local ratio = logA - logB
 	local int = math.floor(ratio)
 	local frac = ratio - int
-	local rMan = math.pow(10, frac) * man2
+	local rMan = (10^frac) * man2
 	local rExp = exp2 + int
 	local shift = math.floor(math.log10(rMan))
-	return {rMan / math.pow(10, shift), rExp + shift}
+	return {rMan / 10^shift, rExp + shift}
 end
 
 function Bnum.modf(val: any): (BN, BN)
@@ -1817,7 +1817,7 @@ function Bnum.modf(val: any): (BN, BN)
 			man, exp = 0, 0
 		else
 			local exp1 = math.floor(math.log10(math.abs(val)))
-			man, exp = val/math.pow(10, exp1), exp1
+			man, exp = val/10^exp1, exp1
 		end
 	elseif types == 'string' then
 		local e = string.find(val, 'e')
@@ -1829,7 +1829,7 @@ function Bnum.modf(val: any): (BN, BN)
 				man, exp = 0, 0
 			else
 				local exp1 = math.floor(math.log10(number:: number))
-				man, exp = number/math.pow(10, exp1), exp1
+				man, exp = number/10^exp1, exp1
 			end
 		end
 	elseif types == 'table' then
@@ -1845,7 +1845,7 @@ function Bnum.modf(val: any): (BN, BN)
 				man, exp = 0, 0
 			else
 				local exp1 = math.floor(math.log10(math.abs(val[1])))
-				man, exp = val[1]/math.pow(10, exp1), exp1
+				man, exp = val[1]/10^exp1, exp1
 			end
 		end
 	end
@@ -1869,7 +1869,7 @@ function Bnum.fmod(val1: any, val2: any): BN
 			man1, exp1 = 0, 0
 		else
 			local exp = math.floor(math.log10(val1))
-			man1, exp1 = val1/math.pow(10, exp), exp
+			man1, exp1 = val1/10^exp, exp
 		end
 	elseif types == 'string' then
 		local e = string.find(val1, 'e')
@@ -1881,7 +1881,7 @@ function Bnum.fmod(val1: any, val2: any): BN
 				man1, exp1 = 0, 0
 			else
 				local exp = math.floor(math.log10(number:: number))
-				man1, exp1 = number/math.pow(10, exp), exp
+				man1, exp1 = number/10^exp, exp
 			end
 		end
 	elseif types == 'table' then
@@ -1897,7 +1897,7 @@ function Bnum.fmod(val1: any, val2: any): BN
 				man1, exp1 = 0, 0
 			else
 				local exp = math.floor(math.log10(val1[1]))
-				man1, exp1 = val1[1]/math.pow(10, exp), exp
+				man1, exp1 = val1[1]/10^exp, exp
 			end
 		end
 	end
@@ -1907,7 +1907,7 @@ function Bnum.fmod(val1: any, val2: any): BN
 			man2, exp2 = 0,0
 		else
 			local exp = math.floor(math.log10(val2))
-			man2, exp2 = val2/math.pow(10, exp), exp
+			man2, exp2 = val2/10^exp, exp
 		end
 	elseif t == 'string' then
 		local e = string.find(val2, 'e')
@@ -1919,7 +1919,7 @@ function Bnum.fmod(val1: any, val2: any): BN
 				man2, exp2 = 0, 0
 			else
 				local exp = math.floor(math.log10(number:: number))
-				man2, exp2 = number/math.pow(10, exp), exp
+				man2, exp2 = number/10^exp, exp
 			end
 		end
 	elseif t == 'table' then
@@ -1935,7 +1935,7 @@ function Bnum.fmod(val1: any, val2: any): BN
 				man2, exp2 = 0, 0
 			else
 				local exp = math.floor(math.log10(val2[1]))
-				man2, exp2 = val1[1]/math.pow(10, exp), exp
+				man2, exp2 = val1[1]/10^exp, exp
 			end
 		end
 	end
@@ -1975,7 +1975,7 @@ function Bnum.ceil(val: any): BN
 			man, exp = 0, 0
 		else
 			local exp1 = math.floor(math.log10(math.abs(val)))
-			man, exp = val/math.pow(10, exp1), exp1
+			man, exp = val/10^exp1, exp1
 		end
 	elseif types == 'string' then
 		local e = string.find(val, 'e')
@@ -1987,7 +1987,7 @@ function Bnum.ceil(val: any): BN
 				man, exp = 0, 0
 			else
 				local exp1 = math.floor(math.log10(number:: number))
-				man, exp = number/math.pow(10, exp1), exp1
+				man, exp = number/10^exp1, exp1
 			end
 		end
 	elseif types == 'table' then
@@ -2003,20 +2003,20 @@ function Bnum.ceil(val: any): BN
 				man, exp = 0, 0
 			else
 				local exp1 = math.floor(math.log10(val[1]))
-				man, exp = val[1]/math.pow(10, exp1), exp1
+				man, exp = val[1]/10^exp1, exp1
 			end
 		end
 	end
 	if exp > 0 then
-		local int = math.floor(man*math.pow(10, exp))
-		if man*math.pow(10, exp) > int then
+		local int = math.floor(man*10^exp)
+		if man*10^exp > int then
 			int += 1
 		end
 		local newE = math.floor(math.log10(int))
-		return {int/math.pow(10, exp), exp}
+		return {int/10^exp, exp}
 	end
 	local shift = -exp
-	local m = man * math.pow(10, shift)
+	local m = man * (10^shift)
 	return {math.ceil(m), exp - shift}
 end
 
